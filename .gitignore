@@ -1,1 +1,3 @@
 FRONTED/node_modules/
+BACKEND/gestion_usuarios/.env
+BACKEND/gestion_usuarios/Dockerfile
