@@ -1,3 +1,4 @@
 FRONTED/node_modules/
 .env
 BACKEND/Dockerfile
+node_modules
