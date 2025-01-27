@@ -5,7 +5,7 @@ const deleteUserById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Buscar el usuario antes de eliminar
+    // Buscar el usuario antes de eliminarlo
     const user = await User.findByPk(id);
     if (!user) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
