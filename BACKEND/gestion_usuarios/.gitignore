@@ -1,2 +1,6 @@
+BACKEND/gestion_usuarios/create_users/node_modules/
+BACKEND/gestion_usuarios/create_users/.env
+BACKEND/gestion_usuarios/read_users/node_modules/
+BACKEND/gestion_usuarios/read_users/.env
 BACKEND/gestion_usuarios/.env
 BACKEND/gestion_usuarios/delete_users/node_modules/
