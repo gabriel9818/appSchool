@@ -1,5 +1,7 @@
 BACKEND/gestion_calificaciones/node_modules/
 BACKEND/gestion_usuarios/create_users/node_modules/
 BACKEND/gestion_usuarios/create_users/.env
+BACKEND/gestion_usuarios/read_users/node_modules/
+BACKEND/gestion_usuarios/read_users/.env
 BACKEND/gestion_materiales/_pycache_/
 BACKEND/gestion_profesores/_pycache_/

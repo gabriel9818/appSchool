@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 // Rutas
-app.use('/api/users', userRoutes);
+app.use('/api/create', userRoutes);
 
 // Sincronizar la base de datos y arrancar el servidor
 sequelize.sync({ force: false }) // Cambia a `true` si deseas reiniciar la base de datos en cada ejecución
