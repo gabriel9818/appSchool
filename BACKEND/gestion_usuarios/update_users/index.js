@@ -1,22 +1,29 @@
-const express = require("express");
-const router = express.Router();
-const db = require("../../db");
+const express = require('express');
+const bodyParser = require('body-parser');
+const { sequelize } = require('./models');
+const userRoutes = require('./routes/userRoutes');
+const dotenv = require('dotenv');
 
-router.put("/:id", async (req, res) => {
-  const { id } = req.params;
-  const { nombre, email, contraseña } = req.body;
-  try {
-    const [result] = await db.query(
-      "UPDATE usuarios SET nombre = ?, email = ?, contraseña = ? WHERE id = ?",
-      [nombre, email, contraseña, id]
-    );
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
-    }
-    res.status(200).json({ message: "Usuario actualizado" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+// Cargar variables de entorno
+dotenv.config();
 
-module.exports = router;
+const app = express();
+const PORT = process.env.PORT || 3004; // Cambia el puerto si es necesario
+
+// Middleware
+app.use(bodyParser.json());
+
+// Rutas
+app.use('/api/update', userRoutes);
+
+// Conectar a la base de datos y arrancar el servidor
+sequelize.authenticate()
+  .then(() => {
+    console.log('Database connected successfully.');
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('Unable to connect to the database:', err);
+  });
