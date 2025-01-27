@@ -8,16 +8,16 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3004; // Cambia el puerto si es necesario
+const PORT = process.env.PORT || 3000;
 
-// Middleware
+// Middleware para parsear solicitudes JSON
 app.use(bodyParser.json());
 
 // Rutas
-app.use('/api/update', userRoutes);
+app.use('/api/create', userRoutes);
 
-// Conectar a la base de datos y arrancar el servidor
-sequelize.authenticate()
+// Sincronizar la base de datos y arrancar el servidor
+sequelize.sync({ force: false }) // Cambia a `true` si deseas reiniciar la base de datos en cada ejecución
   .then(() => {
     console.log('Database connected successfully.');
     app.listen(PORT, () => {

@@ -1,18 +1,29 @@
-const express = require("express");
-const router = express.Router();
-const db = require("../db");
+const express = require('express');
+const bodyParser = require('body-parser');
+const { sequelize } = require('./models');
+const userRoutes = require('./routes/userRoutes');
+const dotenv = require('dotenv');
 
-router.delete("/:id", async (req, res) => {
-  const { id } = req.params;
-  try {
-    const [result] = await db.query("DELETE FROM usuarios WHERE id = ?", [id]);
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
-    }
-    res.status(200).json({ message: "Usuario eliminado" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+// Cargar variables de entorno
+dotenv.config();
 
-module.exports = router;
+const app = express();
+const PORT = process.env.PORT || 3002; // Cambia el puerto para evitar conflictos con otros microservicios
+
+// Middleware
+app.use(bodyParser.json());
+
+// Rutas
+app.use('/api/delete', userRoutes);
+
+// Conectar a la base de datos y arrancar el servidor
+sequelize.authenticate()
+  .then(() => {
+    console.log('Database connected successfully.');
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('Unable to connect to the database:', err);
+  });
