@@ -1,0 +1,21 @@
+# Imagen base de Go
+FROM golang:1.20
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Copiar módulos y descargar dependencias
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copiar el código fuente
+COPY . .
+
+# Compilar la aplicación
+RUN go build -o main .
+
+# Exponer el puerto
+EXPOSE 8080
+
+# Comando para ejecutar la aplicación
+CMD ["./main"]
