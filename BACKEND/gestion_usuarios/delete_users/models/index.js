@@ -1,4 +1,4 @@
-const { sequelize } = require('../../create_users/models/index'); // Importa la conexión desde create_users
-const User = require('../../create_users/models/User'); // Importa el modelo User desde create_users
+const { sequelize } = require('../gestion_usuarios/create_users/models/index'); // Ruta relativa a sequelize
+const User = require('../gestion_usuarios/create_users/models/User'); // Ruta relativa al modelo User
 
-module.exports = { sequelize, User }; // Exporta conexión y modelo
+module.exports = { sequelize, User };
