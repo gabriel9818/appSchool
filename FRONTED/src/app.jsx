@@ -1,22 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Login from "./components/login";
 import Dashboard from "./components/dashboard";
 
 const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [token, setToken] = useState(localStorage.getItem("token") || null);
 
-  const handleLogin = (username, password) => {
-    if (username === "admin" && password === "admin") {
-      setIsAuthenticated(true);
-    } else {
-      alert("Usuario o contraseña incorrectos");
-    }
+  // Función para manejar el login y guardar el token
+  const handleLogin = (token) => {
+    setToken(token);
+    localStorage.setItem("token", token); // Guarda el token en localStorage
+  };
+
+  // Función para cerrar sesión
+  const handleLogout = () => {
+    setToken(null);
+    localStorage.removeItem("token"); // Elimina el token al cerrar sesión
   };
 
   return (
     <div>
-      {isAuthenticated ? (
-        <Dashboard />
+      {token ? (
+        <Dashboard onLogout={handleLogout} />
       ) : (
         <Login onLogin={handleLogin} />
       )}

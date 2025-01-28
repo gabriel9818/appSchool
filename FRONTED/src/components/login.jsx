@@ -1,12 +1,33 @@
 import React, { useState } from "react";
 
 const Login = ({ onLogin }) => {
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("admin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onLogin(username, password);
+
+    try {
+      const response = await fetch("http://localhost:3006/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem("token", data.token); // Guardar el token en localStorage
+        onLogin(data.token);
+      } else {
+        alert(data.error || "Error en la autenticación");
+      }
+    } catch (error) {
+      console.error("Error en el login:", error);
+      alert("No se pudo conectar al servidor");
+    }
   };
 
   return (
@@ -14,12 +35,12 @@ const Login = ({ onLogin }) => {
       <form className="login-form" onSubmit={handleSubmit}>
         <h2>Iniciar Sesión</h2>
         <div className="form-group">
-          <label htmlFor="username">Usuario:</label>
+          <label htmlFor="email">Correo Electrónico:</label>
           <input
-            type="text"
-            id="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            type="email"
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>
