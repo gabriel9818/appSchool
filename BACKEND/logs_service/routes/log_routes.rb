@@ -6,26 +6,21 @@ class LogRoutes < Sinatra::Base
     content_type 'application/json'
   end
 
-  get '/logs' do
-    logs = Log.all
-    logs.to_json
-  end
-
+  # Endpoint para guardar un log
   post '/logs' do
     data = JSON.parse(request.body.read)
 
-    log = Log.new(
-      user_id: data['user_id'],
-      action: data['action'],
-      details: data['details']
-    )
+    user_id = data['user_id']
+    action = data['action']
+    details = data['details']
 
-    if log.save
-      status 201
-      log.to_json
-    else
+    if user_id.nil? || action.nil?
       status 400
-      { error: 'No se pudo registrar el log' }.to_json
+      return { error: 'user_id y action son obligatorios' }.to_json
     end
+
+    result = Log.save(user_id, action, details)
+    status 201
+    result.to_json
   end
 end

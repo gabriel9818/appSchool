@@ -2,6 +2,11 @@ const { User } = require('../models');
 const bcrypt = require('bcrypt');
 const { generateToken } = require('../utils/jwt');
 
+const axios = require('axios'); // Importamos axios para hacer la petición al microservicio de logs
+
+// URL del microservicio de logs
+const LOGS_SERVICE_URL = "http://localhost:4567/logs"; 
+
 // Iniciar sesión
 const login = async (req, res) => {
   try {
@@ -21,6 +26,12 @@ const login = async (req, res) => {
 
     // Generar un token JWT
     const token = generateToken({ id: user.id, email: user.email, rol: user.rol });
+
+    await axios.post(LOGS_SERVICE_URL, {
+      user_id: user.id,
+      action: 'Login',
+      details: `El usuario ${user.email} inició sesión.`
+    });
 
     res.status(200).json({ message: 'Autenticación exitosa', token });
   } catch (error) {
