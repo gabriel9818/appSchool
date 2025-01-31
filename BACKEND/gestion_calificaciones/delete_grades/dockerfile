@@ -1,0 +1,17 @@
+# Imagen base
+FROM oven/bun:1.0
+
+# Definir directorio de trabajo
+WORKDIR /app
+
+# Copiar archivos
+COPY . .
+
+# Instalar dependencias
+RUN bun install
+
+# Exponer el puerto
+EXPOSE 3000
+
+# Iniciar servidor
+CMD ["bun", "run", "main.ts"]
