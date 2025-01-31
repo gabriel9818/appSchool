@@ -8,7 +8,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3002; // Cambia el puerto para evitar conflictos con otros microservicios
+const PORT = process.env.PORT || 3002; // Asegurar que el puerto no entre en conflicto
 
 // Middleware
 app.use(bodyParser.json());

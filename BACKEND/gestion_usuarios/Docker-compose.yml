@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  create_users:
+    build: ./create_users
+    container_name: create_users
+    restart: always
+    env_file:
+      - ./create_users/.env
+    volumes:
+      - ./create_users:/app
+    working_dir: /app
+    command: ["node", "app.js"]
+    ports:
+      - "3000:3000"
+    networks:
+      - backend_network
+
+  read_users:
+    build: ./read_users
+    container_name: read_users
+    restart: always
+    env_file:
+      - ./read_users/.env
+    volumes:
+      - ./read_users:/app
+    working_dir: /app
+    command: ["node", "index.js"]
+    ports:
+      - "3001:3001"
+    networks:
+      - backend_network
+
+  update_users:
+    build: ./update_users
+    container_name: update_users
+    restart: always
+    env_file:
+      - ./update_users/.env
+    volumes:
+      - ./update_users:/app
+    working_dir: /app
+    command: ["node", "index.js"]
+    ports:
+      - "3004:3004"
+    networks:
+      - backend_network
+
+  delete_users:
+    build: ./delete_users
+    container_name: delete_users
+    restart: always
+    env_file:
+      - ./delete_users/.env
+    volumes:
+      - ./delete_users:/app
+    working_dir: /app
+    command: ["node", "index.js"]
+    ports:
+      - "3002:3002"
+    networks:
+      - backend_network
+
+networks:
+  backend_network:
+    driver: bridge
+
