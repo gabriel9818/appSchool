@@ -3,7 +3,7 @@ name: Deploy Users Microservices
 on:
   push:
     branches:
-      - test  # Se ejecuta cuando haces push a la rama test_aws
+      - test # Se ejecuta cuando haces push a la rama test_aws
 
 jobs:
   deploy:
@@ -16,7 +16,7 @@ jobs:
       - name: 🔑 Configurar conexión SSH con EC2 y desplegar
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host: ubuntu@54.224.160.113
+          host: ${{ secrets.EC2_HOST_USERS }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
