@@ -3,7 +3,7 @@ name: Deploy Users Microservices
 on:
   push:
     branches:
-      - features/test_aws  # Se ejecuta cuando haces push a la rama test_aws
+      - test  # Se ejecuta cuando haces push a la rama test_aws
 
 jobs:
   deploy:
