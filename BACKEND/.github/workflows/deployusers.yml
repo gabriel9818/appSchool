@@ -3,7 +3,7 @@ name: Deploy Users Microservices to EC2
 on:
   push:
     branches:
-      - test  # Se ejecuta cuando hay un push a esta rama
+      - main  # Se ejecuta cuando hay un push a esta rama
 
 jobs:
   deploy:
