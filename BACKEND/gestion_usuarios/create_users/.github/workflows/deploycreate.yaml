@@ -78,7 +78,7 @@ jobs:
           echo "Ejecutando nuevo contenedor en el puerto ${{ secrets.SERVER_PORT_CREATE_USERS }}..."
           sudo docker run -d \
             --name create_users \
-            -p 3001:${{ secrets.SERVER_PORT_CREATE_USERS }} \
+            -p 3000:${{ secrets.SERVER_PORT_CREATE_USERS }} \
             -e DB_HOST=${{ secrets.DB_HOST }} \
             -e DB_USER=${{ secrets.DB_USER }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
