@@ -1,39 +1,43 @@
-name: Deploy Users Microservices to EC2
+name: Deploy Users Microservices
 
 on:
   push:
     branches:
-      - test # Se ejecuta cuando hay un push a esta rama
+      - features/test_aws  # Se ejecuta cuando haces push a la rama test_aws
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: 📥 Checkout del repositorio
-      uses: actions/checkout@v4
+      - name: 📥 Checkout del repositorio
+        uses: actions/checkout@v4
 
-    - name: 🔑 Configurar conexión SSH con EC2
-      uses: webfactory/ssh-agent@v0.5.3
-      with:
-        ssh-private-key: ${{ secrets.EC2_SSH_KEY}}
+      - name: 🔑 Configurar conexión SSH con EC2 y desplegar
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ubuntu@54.224.160.113
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "🔄 Exportando variables de entorno..."
+            echo "export DB_HOST=${{ secrets.DB_HOST }}" >> ~/.bashrc
+            echo "export DB_USER=${{ secrets.DB_USER }}" >> ~/.bashrc
+            echo "export DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> ~/.bashrc
+            echo "export DB_NAME=${{ secrets.DB_NAME }}" >> ~/.bashrc
+            echo "export DB_PORT=${{ secrets.DB_PORT }}" >> ~/.bashrc
+            source ~/.bashrc
 
-    - name: 🚀 Desplegar en EC2
-      run: |
-        echo "🔗 Conectándose a la instancia EC2..."
-        ssh -o StrictHostKeyChecking=no ubuntu@54.224.160.113 << 'EOF'
-          echo "📦 Navegando al directorio del proyecto..."
-          cd ~/appSchool/BACKEND/gestion_usuarios
+            echo "📦 Navegando al directorio del proyecto..."
+            cd ~/appSchool/BACKEND/gestion_usuarios
 
-          echo "🔄 Deteniendo servicios existentes..."
-          docker-compose down
+            echo "🔄 Deteniendo servicios existentes..."
+            docker-compose down
 
-          echo "⬇️ Obteniendo cambios del repositorio..."
-          git pull origin features/test_aws
+            echo "⬇️ Obteniendo cambios del repositorio..."
+            git pull origin features/test_aws
 
-          echo "🐳 Construyendo y ejecutando los microservicios..."
-          docker-compose up -d --build
+            echo "🐳 Construyendo y ejecutando los microservicios..."
+            docker-compose up -d --build
 
-          echo "✅ Despliegue exitoso en EC2."
-          
-        EOF
+            echo "✅ Despliegue exitoso en EC2."
