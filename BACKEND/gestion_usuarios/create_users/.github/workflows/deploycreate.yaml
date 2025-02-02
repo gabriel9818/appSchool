@@ -1,0 +1,98 @@
+name: Docker Image CI/CD for Create Users Service
+
+on:
+  push:
+    paths:
+      - 'BACKEND/gestion_usuarios/create_users/**'
+    branches: ["test"]
+  pull_request:
+    paths:
+      - 'BACKEND/gestion_usuarios/create_users/**'
+    branches: ["test", "main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Paso 1: Checkout del repositorio
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Paso 2: Login en Docker Hub
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    # Paso 3: Construcción de la imagen Docker usando los secrets
+    - name: Build Docker image
+      run: |
+        docker build BACKEND/gestion_usuarios/create_users/. --file BACKEND/gestion_usuarios/create_users/Dockerfile \
+          --build-arg DB_HOST=${{ secrets.DB_HOST }} \
+          --build-arg DB_USER=${{ secrets.DB_USER }} \
+          --build-arg DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+          --build-arg DB_NAME=${{ secrets.DB_NAME }} \
+          --build-arg SERVER_PORT=${{ secrets.SERVER_PORT_CREATE_USERS }} \
+          -t ${{ secrets.DOCKER_USERNAME }}/create_users:latest
+
+    # Paso 4: Subir la imagen a Docker Hub
+    - name: Push Docker image to Docker Hub
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/create_user:latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    # Paso 1: Conectar al servidor EC2 usando SSH
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.EC2_HOST_CREATE_USERS }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
+        script: |
+          # Verificar si Docker está instalado
+          if ! command -v docker &> /dev/null; then
+            echo "==> Installing Docker"
+            sudo apt update -y
+            sudo apt install -y docker.io
+            sudo systemctl start docker
+            sudo usermod -aG docker ubuntu
+          fi
+
+          # Detener y eliminar el contenedor previo si existe
+          echo "Deteniendo y eliminando contenedor previo..."
+          sudo docker stop create_users || true
+          sudo docker rm create_users || true
+          
+          # Descargar la última imagen desde Docker Hub
+          echo "Actualizando imagen desde Docker Hub..."
+          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/create_users:latest
+          
+          # Ejecutar el nuevo contenedor en el puerto 3001
+          echo "Ejecutando nuevo contenedor en el puerto ${{ secrets.SERVER_PORT_CREATE_USERS }}..."
+          sudo docker run -d \
+            --name create_users
+ \
+            -p 3001:${{ secrets.SERVER_PORT_CREATE_USERS }} \
+            -e DB_HOST=${{ secrets.DB_HOST }} \
+            -e DB_USER=${{ secrets.DB_USER }} \
+            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e DB_NAME=${{ secrets.DB_NAME }} \
+            -e SERVER_PORT=${{ secrets.SERVER_PORT_CREATE_USERS }} \
+            ${{ secrets.DOCKER_USERNAME }}/create_users
+:latest
+
+          # Verificar que el contenedor esté corriendo
+          if sudo docker ps -f name=create_users | grep create_users; then
+            echo "✅ Contenedor 'create_users
+' corriendo correctamente."
+          else
+            echo "❌ Error al iniciar el contenedor. Revisa los logs."
+            exit 1
+          fi

@@ -5,10 +5,10 @@ FROM node:18
 WORKDIR /app
 
 # Copiar solo package.json y package-lock.json para aprovechar la caché de Docker
-COPY package*.json ./
+COPY package.json package-lock.json ./
 
 # Instalar las dependencias
-RUN npm install
+RUN npm install --only=production
 
 # Copiar el resto de los archivos de la aplicación
 COPY . .
