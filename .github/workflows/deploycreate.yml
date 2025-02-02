@@ -2,9 +2,8 @@ name: Docker Image CI/CD for Create Users Service
 
 on:
   push:
-    paths:
-      - 'appSchool/BACKEND/gestion_usuarios/create_users/**'
-    branches: ["test"]
+     branches: 
+      - test
   pull_request:
     paths:
       - 'appSchool/BACKEND/gestion_usuarios/create_users/**'
