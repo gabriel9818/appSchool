@@ -3,7 +3,7 @@ name: Deploy Users Microservices
 on:
   push:
     branches:
-      - test # Se ejecuta cuando haces push a la rama test_aws
+      - test
 
 jobs:
   deploy:
@@ -13,20 +13,26 @@ jobs:
       - name: 📥 Checkout del repositorio
         uses: actions/checkout@v4
 
-      - name: 🔑 Configurar conexión SSH con EC2 y desplegar
-        uses: appleboy/ssh-action@v0.1.7
+      - name: 🔑 Agregar clave SSH a la instancia EC2
+        uses: webfactory/ssh-agent@v0.5.3
         with:
-          host: ${{ secrets.EC2_HOST_USERS }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            echo "🔄 Exportando variables de entorno..."
-            echo "export DB_HOST=${{ secrets.DB_HOST }}" >> ~/.bashrc
-            echo "export DB_USER=${{ secrets.DB_USER }}" >> ~/.bashrc
-            echo "export DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> ~/.bashrc
-            echo "export DB_NAME=${{ secrets.DB_NAME }}" >> ~/.bashrc
-            echo "export DB_PORT=${{ secrets.DB_PORT }}" >> ~/.bashrc
-            source ~/.bashrc
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: 🚀 Conectar y desplegar en EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST_USERS }} << 'EOF'
+            echo "🔄 Exportando variables de entorno en cada microservicio..."
+            
+            # Crear el archivo .env en cada microservicio dentro de gestion_usuarios
+            for service in create_users delete_users read_users update_users; do
+              echo "📌 Configurando .env en \$service..."
+              echo "DB_HOST=${{ secrets.DB_HOST }}" > ~/appSchool/BACKEND/gestion_usuarios/\$service/.env
+              echo "DB_USER=${{ secrets.DB_USER }}" >> ~/appSchool/BACKEND/gestion_usuarios/\$service/.env
+              echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> ~/appSchool/BACKEND/gestion_usuarios/\$service/.env
+              echo "DB_NAME=${{ secrets.DB_NAME }}" >> ~/appSchool/BACKEND/gestion_usuarios/\$service/.env
+              echo "DB_PORT=${{ secrets.DB_PORT }}" >> ~/appSchool/BACKEND/gestion_usuarios/\$service/.env
+              echo "MODE=production" >> ~/appSchool/BACKEND/gestion_usuarios/\$service/.env
+            done
 
             echo "📦 Navegando al directorio del proyecto..."
             cd ~/appSchool/BACKEND/gestion_usuarios
@@ -41,3 +47,4 @@ jobs:
             docker-compose up -d --build
 
             echo "✅ Despliegue exitoso en EC2."
+          EOF
