@@ -4,7 +4,6 @@ const { sequelize } = require('./models');
 const userRoutes = require('./routes/userRoutes');
 const dotenv = require('dotenv');
 
-// Cargar variables de entorno
 dotenv.config();
 
 const app = express();
@@ -14,7 +13,7 @@ const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 // Rutas
-app.use('/api/create', userRoutes);
+app.use('/api', userRoutes); // 🔹 Se eliminó `/create` para evitar confusión con userRoutes.js
 
 // Sincronizar la base de datos y arrancar el servidor
 sequelize.sync({ force: false }) // Cambia a `true` si deseas reiniciar la base de datos en cada ejecución

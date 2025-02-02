@@ -16,6 +16,10 @@ const User = sequelize.define('User', {
     unique: true,
     allowNull: false,
   },
+  password: { // 🔹 Se añadió el campo password al modelo
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
   rol: {
     type: DataTypes.ENUM('profesor', 'usuario', 'administrador'),
     allowNull: false,
