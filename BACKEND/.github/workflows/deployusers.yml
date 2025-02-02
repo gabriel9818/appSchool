@@ -1,54 +1,26 @@
-name: Deploy User Services to AWS EC2
+name: Deploy Users Microservices
 
 on:
   push:
     branches:
-      - features/test_aws  # Se ejecuta solo cuando hay un push en la rama test_aws
+      - features/test_aws  # Se ejecuta cuando haces push a la rama test_aws
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🔽 Clonar el repositorio
-        uses: actions/checkout@v3
+      - name: 📥 Checkout del repositorio
+        uses: actions/checkout@v4
 
-      - name: 🔑 Configurar acceso a EC2
-        env:
-          PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
-          HOST: ${{ secrets.EC2_HOST_USERS }}
-          USER: ubuntu
-        run: |
-          echo "$PRIVATE_KEY" > private_key.pem
-          chmod 600 private_key.pem
-
-      - name: 📦 Copiar archivos al servidor EC2
-        run: |
-          rsync -avz -e "ssh -i private_key.pem -o StrictHostKeyChecking=no" \
-          ./BACKEND/gestion_usuarios ubuntu@${{ secrets.EC2_HOST_USERS }}:/home/ubuntu/appschool/
-
-      - name: 🐳 Conectar y desplegar en EC2
-        run: |
-          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST_USERS }} << 'EOF'
-          # Ir al directorio del proyecto
-          cd /home/ubuntu/appschool/gestion_usuarios
-          
-          # Verificar si Docker está instalado
-          if ! command -v docker &> /dev/null; then
-            echo "Docker no encontrado, instalando..."
-            sudo apt update
-            sudo apt install -y docker.io docker-compose
-            sudo usermod -aG docker ubuntu
-          fi
-          
-          # Descargar la última versión del repositorio
-          git pull origin test_aws
-
-          # Construir y levantar los contenedores
-          sudo docker-compose down
-          sudo docker-compose build
-          sudo docker-compose up -d
-
-          # Verificar estado de los contenedores
-          sudo docker ps
-          EOF
+      - name: 🔑 Configurar conexión SSH con EC2
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST_USERS }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY}}
+          script: |
+            cd ~/appSchool/BACKEND/gestion_usuarios
+            git pull origin test_aws  # Asegura que el código está actualizado
+            docker-compose down
+            docker-compose up -d --build
