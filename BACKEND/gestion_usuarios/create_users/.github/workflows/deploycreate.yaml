@@ -29,7 +29,7 @@ jobs:
     # Paso 3: Construcción de la imagen Docker usando los secrets
     - name: Build Docker image
       run: |
-        docker build BACKEND/gestion_usuarios/create_users/. --file BACKEND/gestion_usuarios/create_users/Dockerfile \
+        docker build appSchool/BACKEND/gestion_usuarios/create_users/. --file appSchool/BACKEND/gestion_usuarios/create_users/Dockerfile \
           --build-arg DB_HOST=${{ secrets.DB_HOST }} \
           --build-arg DB_USER=${{ secrets.DB_USER }} \
           --build-arg DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
@@ -40,7 +40,7 @@ jobs:
     # Paso 4: Subir la imagen a Docker Hub
     - name: Push Docker image to Docker Hub
       run: |
-        docker push ${{ secrets.DOCKER_USERNAME }}/create_user:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/create_users:latest
 
   deploy:
     needs: build
@@ -52,7 +52,7 @@ jobs:
       uses: appleboy/ssh-action@v0.1.8
       with:
         host: ${{ secrets.EC2_HOST_CREATE_USERS }}
-        username: ${{ secrets.EC2_USER }}
+        username: ubuntu
         key: ${{ secrets.EC2_SSH_KEY }}
         port: 22
         script: |
@@ -77,21 +77,18 @@ jobs:
           # Ejecutar el nuevo contenedor en el puerto 3001
           echo "Ejecutando nuevo contenedor en el puerto ${{ secrets.SERVER_PORT_CREATE_USERS }}..."
           sudo docker run -d \
-            --name create_users
- \
+            --name create_users \
             -p 3001:${{ secrets.SERVER_PORT_CREATE_USERS }} \
             -e DB_HOST=${{ secrets.DB_HOST }} \
             -e DB_USER=${{ secrets.DB_USER }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
             -e DB_NAME=${{ secrets.DB_NAME }} \
             -e SERVER_PORT=${{ secrets.SERVER_PORT_CREATE_USERS }} \
-            ${{ secrets.DOCKER_USERNAME }}/create_users
-:latest
+            ${{ secrets.DOCKER_USERNAME }}/create_users:latest
 
           # Verificar que el contenedor esté corriendo
           if sudo docker ps -f name=create_users | grep create_users; then
-            echo "✅ Contenedor 'create_users
-' corriendo correctamente."
+            echo "✅ Contenedor 'create_users' corriendo correctamente."
           else
             echo "❌ Error al iniciar el contenedor. Revisa los logs."
             exit 1
