@@ -11,7 +11,7 @@ const createUser = async (req, res) => {
       return res.status(400).json({ error: 'Rol no válido' });
     }
 
-    // Hash de la contraseña
+    // Hash de la contraseña jwt
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Crear usuario existente
