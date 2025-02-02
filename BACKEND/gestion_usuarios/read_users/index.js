@@ -10,7 +10,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001; // Usa un puerto diferente al de create_users
 
-// Middleware
+// Middleware s
 app.use(bodyParser.json());
 
 // Rutas
