@@ -91,6 +91,7 @@ jobs:
           if sudo docker ps -f name=create_users | grep create_users; then
             echo "✅ Contenedor 'create_users' corriendo correctamente."
           else
-            echo "❌ Error al iniciar el contenedor. Revisa los logs."
+            echo "❌ Error al iniciar el contene
+            dor. Revisa los logs."
             exit 1
           fi

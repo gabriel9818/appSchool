@@ -6,7 +6,7 @@ const createUser = async (req, res) => {
   try {
     const { nombre, email, password, rol } = req.body;
 
-    // Validar el rol
+    // Validar el rol de usuario
     if (!['profesor', 'usuario', 'administrador'].includes(rol)) {
       return res.status(400).json({ error: 'Rol no válido' });
     }
