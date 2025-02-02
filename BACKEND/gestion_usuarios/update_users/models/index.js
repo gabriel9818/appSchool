@@ -1,4 +1,13 @@
-const { sequelize } = require('../../create_users/models/index'); // Conexión a la base de datos
-const User = require('../../create_users/models/User'); // Modelo User del microservicio create_users
+const { Sequelize } = require('sequelize');
+const dotenv = require('dotenv');
 
-module.exports = { sequelize, User };
+dotenv.config();
+
+const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
+  host: process.env.DB_HOST,
+  dialect: 'mysql',
+  port: process.env.DB_PORT,
+  logging: false,
+});
+
+module.exports = { sequelize };

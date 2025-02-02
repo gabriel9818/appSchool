@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('./index');
+const sequelize = require('./index').sequelize; // Asegurar la importación correcta
 
 const User = sequelize.define('User', {
   id: {
@@ -14,10 +14,6 @@ const User = sequelize.define('User', {
   email: {
     type: DataTypes.STRING,
     unique: true,
-    allowNull: false,
-  },
-  password: {
-    type: DataTypes.STRING,
     allowNull: false,
   },
   rol: {

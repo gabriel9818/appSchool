@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('./index');
 
-const User = sequelize.define('User', {
+const User = sequelize.define('Users', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -24,6 +24,9 @@ const User = sequelize.define('User', {
     type: DataTypes.ENUM('profesor', 'usuario', 'administrador'),
     allowNull: false,
   },
+}, {
+  tableName: 'Users', // Asegurar que coincide con la base de datos
+  timestamps: false,
 });
 
 module.exports = User;
