@@ -35,4 +35,5 @@ jobs:
           docker-compose up -d --build
 
           echo "✅ Despliegue exitoso en EC2."
+          
         EOF
