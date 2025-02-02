@@ -21,7 +21,7 @@ jobs:
     - name: 🚀 Desplegar en EC2
       run: |
         echo "🔗 Conectándose a la instancia EC2..."
-        ssh -o StrictHostKeyChecking=no ubuntu@172.31.91.246 << 'EOF'
+        ssh -o StrictHostKeyChecking=no ubuntu@54.224.160.113 << 'EOF'
           echo "📦 Navegando al directorio del proyecto..."
           cd ~/appSchool/BACKEND/gestion_usuarios
 
