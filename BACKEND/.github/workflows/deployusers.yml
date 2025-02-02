@@ -1,26 +1,38 @@
-name: Deploy Users Microservices
+name: Deploy Users Microservices to EC2
 
 on:
   push:
     branches:
-      - features/test_aws  # Se ejecuta cuando haces push a la rama test_aws
+      - features/test_aws  # Se ejecuta cuando hay un push a esta rama
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout del repositorio
-        uses: actions/checkout@v4
+    - name: 📥 Checkout del repositorio
+      uses: actions/checkout@v4
 
-      - name:  Configurar conexión SSH con EC2
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST_USERS }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY}}
-          script: |
-            cd ~/appSchool/BACKEND/gestion_usuarios
-            git pull origin test_aws  # Asegura que el código está actualizado
-            docker-compose down
-            docker-compose up -d --build
+    - name: 🔑 Configurar conexión SSH con EC2
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.EC2_SSH_KEY}}
+
+    - name: 🚀 Desplegar en EC2
+      run: |
+        echo "🔗 Conectándose a la instancia EC2..."
+        ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST_USERS }} << 'EOF'
+          echo "📦 Navegando al directorio del proyecto..."
+          cd ~/appSchool/BACKEND/gestion_usuarios
+
+          echo "🔄 Deteniendo servicios existentes..."
+          docker-compose down
+
+          echo "⬇️ Obteniendo cambios del repositorio..."
+          git pull origin features/test_aws
+
+          echo "🐳 Construyendo y ejecutando los microservicios..."
+          docker-compose up -d --build
+
+          echo "✅ Despliegue exitoso en EC2."
+        EOF
