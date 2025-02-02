@@ -30,7 +30,7 @@ jobs:
     # Paso 3: Construcción de la imagen Docker usando los secrets
     - name: Build Docker image
       run: |
-        docker build appSchool/BACKEND/gestion_usuarios/create_users/. --file appSchool/BACKEND/gestion_usuarios/create_users/Dockerfile \
+        docker build /BACKEND/gestion_usuarios/create_users/. --file /BACKEND/gestion_usuarios/create_users/Dockerfile \
           --build-arg DB_HOST=${{ secrets.DB_HOST }} \
           --build-arg DB_USER=${{ secrets.DB_USER }} \
           --build-arg DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
