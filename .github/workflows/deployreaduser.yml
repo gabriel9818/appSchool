@@ -3,9 +3,9 @@ name: Docker Image CI/CD for Read Users Service
 on:
   push:
     branches:
-      - test  # Se ejecuta en la rama test
+      - test
     paths:
-      - 'BACKEND/gestion_usuarios/read_users/**'  # Solo cuando hay cambios en read_users
+      - 'BACKEND/gestion_usuarios/read_users/**'
   pull_request:
     paths:
       - 'BACKEND/gestion_usuarios/read_users/**'
@@ -16,18 +16,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: 📥 Checkout del código
+    # 📥 Paso 1: Checkout del repositorio
+    - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: 🔑 Login en Docker Hub
+    # 🛠️ Paso 2: Verificar estructura del repositorio en GitHub Actions
+    - name: Debug repository structure
+      run: |
+        echo "📂 Listando archivos en el workspace..."
+        ls -R $GITHUB_WORKSPACE
+
+    # 🔑 Paso 3: Login en Docker Hub
+    - name: Log in to Docker Hub
       uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: 🛠️ Construcción de la imagen Docker
+    # 🐳 Paso 4: Construcción de la imagen Docker
+    - name: Build Docker image
       run: |
-        docker build BACKEND/gestion_usuarios/read_users/. --file BACKEND/gestion_usuarios/read_users/Dockerfile \
+        docker build $GITHUB_WORKSPACE/BACKEND/gestion_usuarios/read_users/. \
+          --file $GITHUB_WORKSPACE/BACKEND/gestion_usuarios/read_users/Dockerfile \
           --build-arg DB_HOST=${{ secrets.DB_HOST }} \
           --build-arg DB_USER=${{ secrets.DB_USER }} \
           --build-arg DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
@@ -35,7 +45,8 @@ jobs:
           --build-arg SERVER_PORT=${{ secrets.SERVER_PORT_READ_USERS }} \
           -t ${{ secrets.DOCKER_USERNAME }}/read_users:latest
 
-    - name: 📤 Subir la imagen a Docker Hub
+    # 📤 Paso 5: Subir la imagen a Docker Hub
+    - name: Push Docker image to Docker Hub
       run: |
         docker push ${{ secrets.DOCKER_USERNAME }}/read_users:latest
 
@@ -44,7 +55,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: 🚀 Desplegar en EC2
+    # 📡 Paso 1: Conectar al servidor EC2 usando SSH
+    - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.8
       with:
         host: ${{ secrets.EC2_HOST_READ_USERS }}
@@ -52,29 +64,37 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         port: 22
         script: |
-          # Verificar si Docker está instalado
+          echo "🔄 Exportando variables de entorno..."
+          echo "export DB_HOST=${{ secrets.DB_HOST }}" >> ~/.bashrc
+          echo "export DB_USER=${{ secrets.DB_USER }}" >> ~/.bashrc
+          echo "export DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> ~/.bashrc
+          echo "export DB_NAME=${{ secrets.DB_NAME }}" >> ~/.bashrc
+          echo "export SERVER_PORT=${{ secrets.SERVER_PORT_READ_USERS }}" >> ~/.bashrc
+          source ~/.bashrc
+
+          echo "📦 Navegando al directorio del proyecto..."
+          cd ~/appSchool/BACKEND/gestion_usuarios/read_users
+
+          echo "🛠️ Verificando si Docker está instalado..."
           if ! command -v docker &> /dev/null; then
-            echo "==> Instalando Docker"
+            echo "🔧 Instalando Docker..."
             sudo apt update -y
             sudo apt install -y docker.io
             sudo systemctl start docker
             sudo usermod -aG docker ubuntu
           fi
 
-          # Detener y eliminar el contenedor anterior si existe
-          echo "🛑 Deteniendo y eliminando el contenedor anterior..."
+          echo "🛑 Deteniendo y eliminando contenedor previo..."
           sudo docker stop read_users || true
           sudo docker rm read_users || true
-
-          # Descargar la última imagen desde Docker Hub
-          echo "⬇️ Descargando la imagen más reciente de Docker Hub..."
+          
+          echo "⬇️ Descargando la última imagen desde Docker Hub..."
           sudo docker pull ${{ secrets.DOCKER_USERNAME }}/read_users:latest
-
-          # Ejecutar el contenedor con el puerto 3001
-          echo "🚀 Iniciando nuevo contenedor en el puerto ${{ secrets.SERVER_PORT_READ_USERS }}..."
+          
+          echo "🚀 Ejecutando el nuevo contenedor en el puerto ${{ secrets.SERVER_PORT_READ_USERS }}..."
           sudo docker run -d \
             --name read_users \
-            -p 3001:${{ secrets.SERVER_PORT_READ_USERS }} \
+            -p 3001:3001 \
             -e DB_HOST=${{ secrets.DB_HOST }} \
             -e DB_USER=${{ secrets.DB_USER }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
@@ -82,7 +102,7 @@ jobs:
             -e SERVER_PORT=${{ secrets.SERVER_PORT_READ_USERS }} \
             ${{ secrets.DOCKER_USERNAME }}/read_users:latest
 
-          # Verificar que el contenedor esté corriendo
+          echo "🔍 Verificando si el contenedor está corriendo..."
           if sudo docker ps -f name=read_users | grep read_users; then
             echo "✅ Contenedor 'read_users' corriendo correctamente."
           else

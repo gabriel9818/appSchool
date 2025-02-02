@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 // Rutas
 app.use('/api/users', userRoutes);
 
-// Conectar a la base de datos y arrancar el servidor
+// Conectar a la base de datos y arrancar el servidor 1
 sequelize.authenticate()
   .then(() => {
     console.log('Database connected successfully.');
