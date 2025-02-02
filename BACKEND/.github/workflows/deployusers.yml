@@ -3,7 +3,7 @@ name: Deploy User Services to AWS EC2
 on:
   push:
     branches:
-      - test_aws  # Se ejecuta automáticamente en cada push a esta rama
+      - features/test_aws  # Se ejecuta automáticamente en cada push a esta rama
 
 jobs:
   deploy:
