@@ -4,7 +4,7 @@ const { sequelize } = require('./models');
 const userRoutes = require('./routes/userRoutes');
 const dotenv = require('dotenv');
 
-// Cargar variables de entorno
+// Cargar variables de entorno del paquete
 dotenv.config();
 
 const app = express();
