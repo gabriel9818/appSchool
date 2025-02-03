@@ -1,0 +1,17 @@
+# Use the official PHP Apache image
+FROM php:8.2-apache
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy project files
+COPY . .
+
+# Install required PHP extensions
+RUN docker-php-ext-install pdo pdo_mysql
+
+# Expose port 8000
+EXPOSE 8000
+
+# Start Apache
+CMD ["apache2-foreground"]
