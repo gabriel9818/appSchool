@@ -1,0 +1,13 @@
+# Usa PHP como base
+FROM php:8.2-apache
+
+# Copia los archivos
+WORKDIR /var/www/html
+COPY . .
+
+# Instala dependencias
+RUN docker-php-ext-install pdo pdo_mysql
+
+# Exponer el puerto
+EXPOSE 80
+CMD ["php", "-S", "0.0.0.0:80", "-t", "routes"]

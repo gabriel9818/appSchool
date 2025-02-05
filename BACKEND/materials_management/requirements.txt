@@ -1,5 +1,0 @@
-flask
-mysql-connector-python
-python-dotenv
-protobuf==4.21.12
-grpcio-tools==1.54.2
