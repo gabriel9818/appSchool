@@ -1,0 +1,14 @@
+# Usa una imagen oficial de PHP con Apache
+FROM php:8.3-apache
+
+# Instala extensiones necesarias
+RUN docker-php-ext-install pdo pdo_mysql
+
+# Copia los archivos al contenedor
+COPY . /var/www/html/
+
+# Exponer el puerto de la aplicación
+EXPOSE 8000
+
+# Comando para ejecutar Apache
+CMD ["apache2-foreground"]
