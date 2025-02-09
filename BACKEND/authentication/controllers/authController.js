@@ -12,7 +12,8 @@ const login = async (req, res) => {
     const { email, password } = req.body;
 
     // Consultar el microservicio read_users para verificar si el usuario existe
-    const response = await axios.get(`${READ_USERS_SERVICE_URL}/${email}`);
+    const response = await axios.get(`${READ_USERS_SERVICE_URL}/users/${email}`);
+
 
     if (!response.data || !response.data.user) {
       return res.status(404).json({ error: "Usuario no encontrado" });
