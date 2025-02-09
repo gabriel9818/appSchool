@@ -38,12 +38,12 @@ jobs:
       run: |
         docker build $GITHUB_WORKSPACE/BACKEND/authentication/. \
           --file $GITHUB_WORKSPACE/BACKEND/authentication/Dockerfile \
-          --build-arg JWT_SECRET=${{ secrets.JWT_SECRET }} \
           --build-arg DB_HOST=${{ secrets.DB_HOST }} \
           --build-arg DB_USER=${{ secrets.DB_USER }} \
           --build-arg DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
           --build-arg DB_NAME=${{ secrets.DB_NAME }} \
           --build-arg SERVER_PORT=${{ secrets.SERVER_PORT_AUTH }} \
+          --build-arg READ_USERS_SERVICE_URL=${{ secrets.READ_USERS_SERVICE_URL }} \
           -t ${{ secrets.DOCKER_USERNAME }}/authentication:latest
 
     # 📤 Paso 5: Subir la imagen a Docker Hub
@@ -66,12 +66,12 @@ jobs:
         port: 22
         script: |
           echo "🔄 Exportando variables de entorno..."
-          echo "export JWT_SECRET=${{ secrets.JWT_SECRET }}" >> ~/.bashrc
           echo "export DB_HOST=${{ secrets.DB_HOST }}" >> ~/.bashrc
           echo "export DB_USER=${{ secrets.DB_USER }}" >> ~/.bashrc
           echo "export DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> ~/.bashrc
           echo "export DB_NAME=${{ secrets.DB_NAME }}" >> ~/.bashrc
           echo "export SERVER_PORT=${{ secrets.SERVER_PORT_AUTH }}" >> ~/.bashrc
+          echo "export READ_USERS_SERVICE_URL=${{ secrets.READ_USERS_SERVICE_URL }}" >> ~/.bashrc
           source ~/.bashrc
 
           echo "📦 Navegando al directorio del proyecto..."
@@ -97,12 +97,12 @@ jobs:
           sudo docker run -d \
             --name authentication \
             -p 3006:3006 \
-            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
             -e DB_HOST=${{ secrets.DB_HOST }} \
             -e DB_USER=${{ secrets.DB_USER }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
             -e DB_NAME=${{ secrets.DB_NAME }} \
             -e SERVER_PORT=${{ secrets.SERVER_PORT_AUTH }} \
+            -e READ_USERS_SERVICE_URL=${{ secrets.READ_USERS_SERVICE_URL }} \
             ${{ secrets.DOCKER_USERNAME }}/authentication:latest
 
           echo "🔍 Verificando si el contenedor está corriendo..."
