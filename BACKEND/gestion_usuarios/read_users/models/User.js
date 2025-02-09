@@ -16,6 +16,10 @@ module.exports = (sequelize) => {
       unique: true,
       allowNull: false,
     },
+    password: { // 🔹 Asegurar que el campo password está definido
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     rol: {
       type: DataTypes.ENUM('profesor', 'usuario', 'administrador'),
       allowNull: false,

@@ -4,7 +4,7 @@ const { generateToken } = require("../utils/jwt");
 
 // URL de los microservicios
 const LOGS_SERVICE_URL = process.env.LOGS_SERVICE_URL || "http://localhost:4567/logs";
-const READ_USERS_SERVICE_URL = process.env.READ_USERS_SERVICE_URL || "http://44.207.13.64:3001/api/users/email"; 
+const READ_USERS_SERVICE_URL = process.env.READ_USERS_SERVICE_URL || "http://44.207.13.64:3001/api/users"; 
 
 // Iniciar sesión
 const login = async (req, res) => {
@@ -24,6 +24,11 @@ const login = async (req, res) => {
     const user = response.data; // El usuario ya está en response.data
 
     console.log(`✅ Usuario encontrado: ${user.email}`);
+
+    if (!user.password) {
+      console.log("⚠️ Advertencia: No se recibió contraseña desde read_users");
+      return res.status(500).json({ error: "No se encontró la contraseña del usuario" });
+    }
 
     // Comparar la contraseña
     const isMatch = await bcrypt.compare(password, user.password);
