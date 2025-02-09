@@ -7,7 +7,7 @@ const router = express.Router();
 router.get('/', getAllUsers);
 
 // Ruta para obtener un usuario por ID
-router.get('/:id', getUserById);
+//router.get('/:id', getUserById);
 
 router.get("/users/:email", async (req, res) => {
     try {
