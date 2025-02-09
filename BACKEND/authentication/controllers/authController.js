@@ -1,22 +1,23 @@
-const { User } = require('../models');
+const axios = require('axios'); // Importamos axios para hacer la petición a read_users
 const bcrypt = require('bcrypt');
 const { generateToken } = require('../utils/jwt');
 
-const axios = require('axios'); // Importamos axios para hacer la petición al microservicio de logs
-
-// URL del microservicio de logs
-const LOGS_SERVICE_URL = "http://localhost:4567/logs"; 
+const LOGS_SERVICE_URL = "http://localhost:4000/logs"; 
+const READ_USERS_SERVICE_URL = process.env.READ_USERS_SERVICE_URL || "http://localhost:3001/api/users"; 
 
 // Iniciar sesión
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Buscar al usuario por email
-    const user = await User.findOne({ where: { email } });
-    if (!user) {
+    // Consultar el microservicio read_users para obtener el usuario
+    const response = await axios.get(`${READ_USERS_SERVICE_URL}/${email}`);
+
+    if (!response.data || !response.data.user) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
+
+    const user = response.data.user;
 
     // Comparar la contraseña
     const isMatch = await bcrypt.compare(password, user.password);
@@ -27,14 +28,16 @@ const login = async (req, res) => {
     // Generar un token JWT
     const token = generateToken({ id: user.id, email: user.email, rol: user.rol });
 
+    // Registrar acción en el microservicio de logs
     await axios.post(LOGS_SERVICE_URL, {
       user_id: user.id,
       action: 'Login',
-      details: `El usuario ${user.email} inició sesión.`
+      details: `El usuario ${user.email} inició sesión.`,
     });
 
     res.status(200).json({ message: 'Autenticación exitosa', token });
   } catch (error) {
+    console.error("Error en el login:", error.message);
     res.status(500).json({ error: error.message });
   }
 };
