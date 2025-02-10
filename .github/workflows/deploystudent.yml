@@ -1,0 +1,118 @@
+name: Docker Image CI/CD for Student Registration Service
+
+on:
+  push:
+    branches:
+      - test
+    paths:
+      - 'BACKEND/student_registration/**'
+  pull_request:
+    paths:
+      - 'BACKEND/student_registration/**'
+    branches: ["test", "main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    #  Checkout del repositorio
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    #   Verificar estructura del repositorio en GitHub Actions
+    - name: Debug repository structure
+      run: |
+        echo "📂 Listando archivos en el workspace..."
+        ls -R $GITHUB_WORKSPACE
+
+    #  Login en Docker Hub
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    #   Construcción de la imagen Docker
+    - name: Build Docker image
+      run: |
+        docker build $GITHUB_WORKSPACE/BACKEND/student_registration/. \
+          --file $GITHUB_WORKSPACE/BACKEND/student_registration/Dockerfile \
+          --build-arg DB_HOST=${{ secrets.DB_HOST_STUDENT }} \
+          --build-arg DB_USER=${{ secrets.DB_USER_STUDENT }} \
+          --build-arg DB_PASSWORD=${{ secrets.DB_PASSWORD_STUDENT }} \
+          --build-arg DB_NAME=${{ secrets.DB_NAME_STUDENT }} \
+          --build-arg SERVER_PORT=${{ secrets.SERVER_PORT_STUDENT }} \
+          -t ${{ secrets.DOCKER_USERNAME }}/student_registration:latest
+
+    #  Subir la imagen a Docker Hub
+    - name: Push Docker image to Docker Hub
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/student_registration:latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    #  Conectar al servidor EC2 usando SSH
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.EC2_HOST_STUDENT }}
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY_STUDENT }}
+        port: 22
+        script: |
+          echo " Exportando variables de entorno..."
+          echo "export DB_HOST=${{ secrets.DB_HOST_STUDENT }}" >> ~/.bashrc
+          echo "export DB_USER=${{ secrets.DB_USER_STUDENT }}" >> ~/.bashrc
+          echo "export DB_PASSWORD=${{ secrets.DB_PASSWORD_STUDENT }}" >> ~/.bashrc
+          echo "export DB_NAME=${{ secrets.DB_NAME_STUDENT }}" >> ~/.bashrc
+          echo "export SERVER_PORT=${{ secrets.SERVER_PORT_STUDENT }}" >> ~/.bashrc
+          source ~/.bashrc
+
+          echo " Navegando al directorio del proyecto..."
+          cd ~/appSchool/BACKEND/student_registration
+
+          echo " Verificando si Docker está instalado..."
+          if ! command -v docker &> /dev/null; then
+            echo "🔧 Instalando Docker..."
+            sudo apt update -y
+            sudo apt install -y docker.io
+            sudo systemctl start docker
+            sudo usermod -aG docker ubuntu
+          fi
+
+          echo " Verificando si Composer está instalado..."
+          if ! command -v composer &> /dev/null; then
+            echo "🔧 Instalando Composer..."
+            curl -sS https://getcomposer.org/installer | php
+            sudo mv composer.phar /usr/local/bin/composer
+          fi
+
+          echo " Deteniendo y eliminando contenedor previo..."
+          sudo docker stop student_registration || true
+          sudo docker rm student_registration || true
+          
+          echo "Descargando la última imagen desde Docker Hub..."
+          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/student_registration:latest
+          
+          echo " Ejecutando el nuevo contenedor en el puerto 8000..."
+          sudo docker run -d \
+            --name student_registration \
+            -p 8000:8000 \
+            -e DB_HOST=${{ secrets.DB_HOST_STUDENT }} \
+            -e DB_USER=${{ secrets.DB_USER_STUDENT }} \
+            -e DB_PASSWORD=${{ secrets.DB_PASSWORD_STUDENT }} \
+            -e DB_NAME=${{ secrets.DB_NAME_STUDENT }} \
+            -e SERVER_PORT=${{ secrets.SERVER_PORT_STUDENT }} \
+            ${{ secrets.DOCKER_USERNAME }}/student_registration:latest
+
+          echo " Verificando si el contenedor está corriendo..."
+          if sudo docker ps -f name=student_registration | grep student_registration; then
+            echo " Contenedor 'student_registration' corriendo correctamente en puerto 8000."
+          else
+            echo " Error al iniciar el contenedor. Revisa los logs."
+            exit 1
+          fi
