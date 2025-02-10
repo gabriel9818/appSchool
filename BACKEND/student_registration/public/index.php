@@ -1,2 +1,2 @@
 <?php
-require_once __DIR__ . '/../src/StudentController.php';
+require_once __DIR__ . '/../src/routes.php';
