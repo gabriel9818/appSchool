@@ -1,30 +1,40 @@
-# Imagen base de PHP con Apache
+# Usar una imagen oficial de PHP con Apache
 FROM php:8.1-apache
 
-# Instalar dependencias
-RUN apt-get update && apt-get install -y \
-    curl \
-    unzip \
-    libonig-dev \
-    libzip-dev \
-    zip \
-    && docker-php-ext-install pdo_mysql
-
-# Instalar Composer manualmente
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
-# Copiar archivos de la aplicación
+# Establecer el directorio de trabajo en el contenedor
 WORKDIR /var/www/html
+
+# Instalar extensiones y dependencias de PHP necesarias
+RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    zip \
+    unzip \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd pdo pdo_mysql
+
+# Instalar Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Copiar los archivos de la aplicación al contenedor
 COPY . /var/www/html
 
-# Asegurar permisos correctos
-RUN chown -R www-data:www-data /var/www/html && chmod -R 775 /var/www/html
+# Dar permisos correctos a la carpeta de la aplicación
+RUN chown -R www-data:www-data /var/www/html
+RUN chmod -R 775 /var/www/html
+
+# Habilitar módulos de Apache y configuración de permisos
+RUN a2enmod rewrite
+
+# Configurar el ServerName en Apache para evitar el error
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 # Instalar dependencias de Composer
-RUN composer install --no-dev --prefer-dist --optimize-autoloader --verbose
+RUN composer install --no-dev --prefer-dist --optimize-autoloader
 
-# Exponer el puerto 8000
-EXPOSE 8000
+# Exponer el puerto en el que correrá Apache
+EXPOSE 80
 
-# Iniciar el servidor Apache
-CMD ["apache2-foreground"]
+# Mantener Apache ejecutándose en Foreground
+CMD ["apachectl", "-D", "FOREGROUND"]
