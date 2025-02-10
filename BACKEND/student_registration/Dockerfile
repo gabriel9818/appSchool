@@ -1,28 +1,30 @@
-# Usar una imagen base de PHP con Apache
+# Imagen base de PHP con Apache
 FROM php:8.1-apache
 
-# Instalar extensiones necesarias
-RUN docker-php-ext-install pdo pdo_mysql
+# Instalar dependencias
+RUN apt-get update && apt-get install -y \
+    curl \
+    unzip \
+    libonig-dev \
+    libzip-dev \
+    zip \
+    && docker-php-ext-install pdo_mysql
 
-# Habilitar mod_rewrite para Apache
-RUN a2enmod rewrite
+# Instalar Composer manualmente
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Copiar los archivos del proyecto al contenedor
-COPY . /var/www/html/
+# Copiar archivos de la aplicación
+WORKDIR /var/www/html
+COPY . /var/www/html
 
-# Crear carpetas necesarias si no existen
-RUN mkdir -p /var/www/html/storage /var/www/html/bootstrap/cache
+# Asegurar permisos correctos
+RUN chown -R www-data:www-data /var/www/html && chmod -R 775 /var/www/html
 
-# Asignar permisos adecuados
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# Instalar dependencias de Composer
+RUN composer install --no-dev --prefer-dist --optimize-autoloader --verbose
 
-# Instalar Composer y dependencias
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-RUN composer install --no-dev --prefer-dist --optimize-autoloader
-
-# Exponer el puerto de Apache (8000)
+# Exponer el puerto 8000
 EXPOSE 8000
 
-# Definir el comando de inicio del contenedor
+# Iniciar el servidor Apache
 CMD ["apache2-foreground"]
