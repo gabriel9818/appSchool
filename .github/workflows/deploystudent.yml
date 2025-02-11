@@ -1,4 +1,4 @@
-name: Docker Image CI/CD for Student Registration Service
+name: Deploy Student Registration Service
 
 on:
   push:
@@ -6,40 +6,27 @@ on:
       - test
     paths:
       - 'BACKEND/student_registration/**'
-  pull_request:
-    paths:
-      - 'BACKEND/student_registration/**'
-    branches: ["test", "main"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    # 📥 1. Checkout del repositorio
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # 🔑 2. Login en Docker Hub
     - name: Log in to Docker Hub
       uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    # 🐳 3. Construcción de la imagen PHP-FPM
-    - name: Build PHP-FPM Docker image
+    - name: Build Docker image
       run: |
         docker build $GITHUB_WORKSPACE/BACKEND/student_registration/. \
-          --file $GITHUB_WORKSPACE/BACKEND/student_registration/Dockerfile \
-          --build-arg DB_HOST=${{ secrets.DB_HOST_STUDENT }} \
-          --build-arg DB_USER=${{ secrets.DB_USER_STUDENT }} \
-          --build-arg DB_PASSWORD=${{ secrets.DB_PASSWORD_STUDENT }} \
-          --build-arg DB_NAME=${{ secrets.DB_NAME_STUDENT }} \
           -t ${{ secrets.DOCKER_USERNAME }}/student_registration_php:latest
 
-    # 📤 4. Subir la imagen PHP-FPM a Docker Hub
-    - name: Push PHP-FPM Docker image
+    - name: Push Docker image to Docker Hub
       run: |
         docker push ${{ secrets.DOCKER_USERNAME }}/student_registration_php:latest
 
@@ -48,7 +35,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 📡 1. Conectar al servidor EC2 usando SSH
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.8
       with:
@@ -57,58 +43,32 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY_STUDENT }}
         port: 22
         script: |
-          echo "🔄 Exportando variables de entorno..."
-          echo "export DB_HOST=${{ secrets.DB_HOST_STUDENT }}" >> ~/.bashrc
-          echo "export DB_USER=${{ secrets.DB_USER_STUDENT }}" >> ~/.bashrc
-          echo "export DB_PASSWORD=${{ secrets.DB_PASSWORD_STUDENT }}" >> ~/.bashrc
-          echo "export DB_NAME=${{ secrets.DB_NAME_STUDENT }}" >> ~/.bashrc
-          source ~/.bashrc
+          echo "Actualizando paquetes e instalando Nginx y PHP-FPM..."
+          sudo apt update -y
+          sudo apt install -y nginx php-fpm
 
-          echo "📦 Verificando si Docker está instalado..."
-          if ! command -v docker &> /dev/null; then
-            echo "🔧 Instalando Docker..."
-            sudo apt update -y
-            sudo apt install -y docker.io
-            sudo systemctl start docker
-            sudo usermod -aG docker ubuntu
-          fi
-
-          echo "🛠️ Instalando Nginx..."
-          sudo apt install -y nginx
-          sudo systemctl enable nginx
-          sudo systemctl start nginx
-
-          echo "🛠️ Configurando Nginx..."
-          echo 'server {
-              listen 80;
-              server_name _;
-              
-              location / {
-                  proxy_pass http://localhost:9000;
-                  proxy_set_header Host $host;
-                  proxy_set_header X-Real-IP $remote_addr;
-                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-              }
-          }' | sudo tee /etc/nginx/sites-available/default
-
+          echo "Configurando Nginx..."
+          sudo mv /home/ubuntu/appSchool/BACKEND/student_registration/nginx.conf /etc/nginx/sites-available/default
           sudo systemctl restart nginx
 
-          echo "🛑 Deteniendo y eliminando contenedor previo..."
+          echo "Deteniendo y eliminando contenedor previo..."
           sudo docker stop student_registration_php || true
           sudo docker rm student_registration_php || true
           
-          echo "⬇️ Descargando la última imagen desde Docker Hub..."
+          echo "Descargando la última imagen desde Docker Hub..."
           sudo docker pull ${{ secrets.DOCKER_USERNAME }}/student_registration_php:latest
           
-          echo "🚀 Ejecutando el nuevo contenedor PHP-FPM en el puerto 9000..."
+          echo "Ejecutando el nuevo contenedor en el puerto 9000..."
           sudo docker run -d \
             --name student_registration_php \
-            -e DB_HOST=${{ secrets.DB_HOST_STUDENT }} \
-            -e DB_USER=${{ secrets.DB_USER_STUDENT }} \
-            -e DB_PASSWORD=${{ secrets.DB_PASSWORD_STUDENT }} \
-            -e DB_NAME=${{ secrets.DB_NAME_STUDENT }} \
+            -v /var/www/html:/var/www/html \
             -p 9000:9000 \
             ${{ secrets.DOCKER_USERNAME }}/student_registration_php:latest
 
-          echo "🔍 Verificando si el contenedor PHP-FPM está corriendo..."
-          sudo docker ps
+          echo "Verificando si el contenedor está corriendo..."
+          if sudo docker ps -f name=student_registration_php | grep student_registration_php; then
+            echo "✅ Contenedor 'student_registration_php' corriendo correctamente en puerto 9000."
+          else
+            echo "❌ Error al iniciar el contenedor. Revisa los logs."
+            exit 1
+          fi

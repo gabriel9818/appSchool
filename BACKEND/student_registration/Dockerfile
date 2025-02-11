@@ -1,7 +1,7 @@
-# Etapa 1: Imagen base de PHP con FPM
+# Usar la imagen base de PHP con FPM
 FROM php:8.1-fpm
 
-# Establecer el directorio de trabajo
+# Establecer el directorio de trabajo en el contenedor
 WORKDIR /var/www/html
 
 # Instalar extensiones necesarias de PHP
@@ -28,3 +28,5 @@ RUN chown -R www-data:www-data /var/www/html && chmod -R 775 /var/www/html
 
 # Exponer puerto de PHP-FPM
 EXPOSE 9000
+
+CMD ["php-fpm"]
