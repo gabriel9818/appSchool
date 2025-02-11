@@ -8,5 +8,4 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 # Registrar routes delete
-
 app.include_router(router, prefix="/api/v1")
