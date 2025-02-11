@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - test  # 🔄 Se ejecuta solo en la rama 'test'
-    paths:
-      - 'BACKEND/student_registration/**'
 
 jobs:
   deploy:
@@ -30,7 +28,7 @@ jobs:
           echo "🚀 Iniciando nuevo contenedor..."
           sudo docker run -d \
             --name student_registration_php \
-            -p 9000:9000 \  # 🔄 Usa el mismo puerto configurado en la instancia
+            -p 9000:9000 \
             -e DB_HOST=${{ secrets.DB_HOST_STUDENT }} \
             -e DB_USER=${{ secrets.DB_USER_STUDENT }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD_STUDENT }} \
