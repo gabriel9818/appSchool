@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - test  # 🔄 Se ejecuta solo en la rama 'test'
+    paths:
+      - 'BACKEND/student_registration/**'
 
 jobs:
   deploy:
