@@ -12,7 +12,7 @@ def read_all_teachers(db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No teachers found")
     return {"teachers": teachers}
 
-@router.get("/eachers_read/{teacher_id}")
+@router.get("/teachers_read/{teacher_id}")
 def read_teacher_by_id(teacher_id: int, db: Session = Depends(get_db)):
     teacher = get_teacher_by_id(db, teacher_id)
     if not teacher:
