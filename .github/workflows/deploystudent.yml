@@ -15,7 +15,7 @@ jobs:
     - name: 🚀 Checkout código
       uses: actions/checkout@v3
 
-    - name: 🔑 Conectar a EC2 y desplegar
+    - name: 🔑 Conectar a EC2 y desplegar cambios
       uses: appleboy/ssh-action@v0.1.8
       with:
         host: ${{ secrets.EC2_HOST_STUDENT }}
@@ -23,49 +23,35 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY_STUDENT }}
         port: 22
         script: |
-          echo "📦 Instalando dependencias en la instancia EC2..."
-          sudo apt update -y
-          sudo apt install -y nginx php8.3-fpm php8.3-mysql unzip git curl
+          echo "📂 Moviéndonos al directorio donde configuraste la aplicación..."
+          cd /var/www/html  # 🚀 Usa la ruta donde ya configuraste todo manualmente
 
-          echo "🐳 Verificando Docker..."
-          if ! command -v docker &> /dev/null; then
-            echo "🛠 Instalando Docker..."
-            sudo apt install -y docker.io
-            sudo systemctl start docker
-            sudo usermod -aG docker ubuntu
-          fi
+          echo "📦 Descargando la última versión del código desde GitHub..."
+          sudo git pull origin test  # 🔄 Solo actualiza el código sin modificar nada más
 
-          echo "📂 Navegando al directorio del proyecto..."
-          cd ~/appSchool/BACKEND/student_registration
-
-          echo "🛠 Configurando Nginx y PHP-FPM..."
-          sudo cp nginx.conf /etc/nginx/sites-available/default
-          sudo systemctl restart nginx php8.3-fpm
-
-          echo "🛠 Configurando permisos de archivos..."
-          sudo chown -R www-data:www-data /var/www/html
-          sudo chmod -R 775 /var/www/html
-
-          echo "🔄 Deteniendo contenedor previo..."
+          echo "📦 Deteniendo contenedor previo..."
           sudo docker stop student_registration_php || true
           sudo docker rm student_registration_php || true
 
-          echo "📦 Descargando la última imagen desde Docker Hub..."
+          echo "📦 Descargando la última imagen de Docker..."
           sudo docker pull ${{ secrets.DOCKER_USERNAME }}/student_registration_php:latest
 
-          echo "🚀 Iniciando el nuevo contenedor..."
+          echo "🚀 Iniciando nuevo contenedor sin modificar configuración..."
           sudo docker run -d \
             --name student_registration_php \
-            -p 9000:9000 \
+            --network=host \  # 🔄 Evita conflictos de puertos
             -e DB_HOST=${{ secrets.DB_HOST_STUDENT }} \
             -e DB_USER=${{ secrets.DB_USER_STUDENT }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD_STUDENT }} \
             -e DB_NAME=${{ secrets.DB_NAME_STUDENT }} \
             ${{ secrets.DOCKER_USERNAME }}/student_registration_php:latest
 
+          echo "🔄 Reiniciando Nginx para aplicar cambios..."
+          sudo systemctl restart nginx
+
           echo "✅ Verificando si el contenedor está corriendo..."
           if sudo docker ps -f name=student_registration_php | grep student_registration_php; then
-            echo "✅ Contenedor corriendo correctamente en puerto 9000."
+            echo "✅ Contenedor corriendo correctamente."
           else
             echo "❌ Error al iniciar el contenedor. Revisa los logs."
             exit 1
