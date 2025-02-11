@@ -28,7 +28,7 @@ jobs:
           echo "🚀 Iniciando nuevo contenedor..."
           sudo docker run -d \
             --name student_registration_php \
-            -p 9000:9000 \
+            -p 9001:9000 \
             -e DB_HOST=${{ secrets.DB_HOST_STUDENT }} \
             -e DB_USER=${{ secrets.DB_USER_STUDENT }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD_STUDENT }} \
