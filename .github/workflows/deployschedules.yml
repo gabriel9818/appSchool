@@ -56,9 +56,9 @@ jobs:
     - name: 🚀 Ejecutar `docker-compose` en EC2
       uses: appleboy/ssh-action@v0.1.8
       with:
-        host: ${{ secrets.EC2_HOST_SCHEDULES }}
+        host: ${{ secrets.EC2_HOST_SCHEDULES_MANAGEMENT}}
         username: ubuntu
-        key: ${{ secrets.EC2_SSH_KEY_SCHEDULES }}
+        key: ${{ secrets.EC2_HOST_TEACHER_MANAGEMENT }}
         script: |
           cd ~/appSchool/BACKEND/schedules_management
           
