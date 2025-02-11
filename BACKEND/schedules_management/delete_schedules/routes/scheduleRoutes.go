@@ -9,6 +9,9 @@ import (
 
 func SetupRoutes() *mux.Router {
 	router := mux.NewRouter()
-	router.HandleFunc("/schedules/{id}", controllers.DeleteSchedule).Methods(http.MethodDelete) // Ruta para Delete
+	router.HandleFunc("/schedules_dl/{id}", controllers.DeleteSchedule).Methods(http.MethodDelete) // Ruta para Delete
+
+	router.HandleFunc("/schedules/delete/{day}/{start_time}/{end_time}", controllers.DeleteSchedule).Methods(http.MethodDelete)
+
 	return router
 }
