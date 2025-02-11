@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String
 from db.database import Base
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 class Teacher(Base):
     __tablename__ = "teachers"
@@ -12,5 +12,5 @@ class Teacher(Base):
 
 class TeacherCreate(BaseModel):
     name: str
-    email: str
+    email: EmailStr  # Asegura que el email tenga un formato válido
     subject: str

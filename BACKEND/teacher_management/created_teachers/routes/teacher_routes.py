@@ -10,6 +10,6 @@ router = APIRouter()
 def create_teacher_endpoint(teacher: TeacherCreate, db: Session = Depends(get_db)):
     try:
         new_teacher = create_teacher(db, teacher.name, teacher.email, teacher.subject)
-        return {"message": "Teacher created successfully", "teacher": new_teacher}
+        return {"message": "✅ Teacher created successfully", "teacher": new_teacher}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=f"❌ Error al crear profesor: {e}")
