@@ -1,13 +1,21 @@
-# Usa PHP como base
-FROM php:8.2-apache
+# Use an official Go runtime as a parent image
+FROM golang:1.20-alpine
 
-# Copia los archivos
-WORKDIR /var/www/html
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy go module files and download dependencies
+COPY go.mod go.sum ./
+RUN go mod tidy
+
+# Copy the source code into the container
 COPY . .
 
-# Instala dependencias
-RUN docker-php-ext-install pdo pdo_mysql
+# Build the Go application
+RUN go build -o main .
 
-# Exponer el puerto
-EXPOSE 80
-CMD ["php", "-S", "0.0.0.0:80", "-t", "routes"]
+# Expose the port the service runs on
+EXPOSE 8080
+
+# Command to run the application
+CMD ["./main"]
