@@ -76,23 +76,11 @@ jobs:
         script: |
           echo "🔄 Exportando variables de entorno..."
           echo "export DB_HOST=${{ secrets.DB_HOST_TEACHER }}" >> ~/.bashrc
-          echo "export DB_PORT=${{ secrets.DB_PORT_TEACHER }}" >> ~/.bashrc
           echo "export DB_USER=${{ secrets.DB_USER_TEACHER }}" >> ~/.bashrc
           echo "export DB_PASSWORD=${{ secrets.DB_PASSWORD_TEACHER }}" >> ~/.bashrc
           echo "export DB_NAME=${{ secrets.DB_NAME_TEACHER }}" >> ~/.bashrc
+          echo "export DB_PORT_TEACHER='5432'" >> ~/.bashrc
           source ~/.bashrc
-
-          echo "🔍 Verificando variables de entorno..."
-          echo "DB_HOST=$DB_HOST"
-          echo "DB_PORT=$DB_PORT"
-          echo "DB_USER=$DB_USER"
-          echo "DB_PASSWORD=$DB_PASSWORD"
-          echo "DB_NAME=$DB_NAME"
-
-          if [ -z "$DB_PORT" ]; then
-            echo "❌ ERROR: DB_PORT está vacío. Asegúrate de definirlo en los Secrets de GitHub."
-            exit 1
-          fi
 
           echo "📦 Navegando al directorio del proyecto..."
           cd ~/appSchool/BACKEND/teacher_management
@@ -126,41 +114,41 @@ jobs:
           sudo docker run -d \
             --name created_teachers \
             -p 8010:8010 \
-            -e DB_HOST=$DB_HOST \
-            -e DB_PORT=$DB_PORT \
-            -e DB_USER=$DB_USER \
-            -e DB_PASSWORD=$DB_PASSWORD \
-            -e DB_NAME=$DB_NAME \
+            -e DB_HOST=${{ secrets.DB_HOST_TEACHER }} \
+            -e DB_PORT_TEACHER='5432' \
+            -e DB_USER=${{ secrets.DB_USER_TEACHER }} \
+            -e DB_PASSWORD=${{ secrets.DB_PASSWORD_TEACHER }} \
+            -e DB_NAME=${{ secrets.DB_NAME_TEACHER }} \
             ${{ secrets.DOCKER_USERNAME }}/created_teachers:latest
 
           sudo docker run -d \
             --name delete_teachers \
             -p 8013:8013 \
-            -e DB_HOST=$DB_HOST \
-            -e DB_PORT=$DB_PORT \
-            -e DB_USER=$DB_USER \
-            -e DB_PASSWORD=$DB_PASSWORD \
-            -e DB_NAME=$DB_NAME \
+            -e DB_HOST=${{ secrets.DB_HOST_TEACHER }} \
+            -e DB_PORT_TEACHER='5432' \
+            -e DB_USER=${{ secrets.DB_USER_TEACHER }} \
+            -e DB_PASSWORD=${{ secrets.DB_PASSWORD_TEACHER }} \
+            -e DB_NAME=${{ secrets.DB_NAME_TEACHER }} \
             ${{ secrets.DOCKER_USERNAME }}/delete_teachers:latest
 
           sudo docker run -d \
             --name read_teachers \
             -p 8011:8011 \
-            -e DB_HOST=$DB_HOST \
-            -e DB_PORT=$DB_PORT \
-            -e DB_USER=$DB_USER \
-            -e DB_PASSWORD=$DB_PASSWORD \
-            -e DB_NAME=$DB_NAME \
+            -e DB_HOST=${{ secrets.DB_HOST_TEACHER }} \
+            -e DB_PORT_TEACHER='5432' \
+            -e DB_USER=${{ secrets.DB_USER_TEACHER }} \
+            -e DB_PASSWORD=${{ secrets.DB_PASSWORD_TEACHER }} \
+            -e DB_NAME=${{ secrets.DB_NAME_TEACHER }} \
             ${{ secrets.DOCKER_USERNAME }}/read_teachers:latest
 
           sudo docker run -d \
             --name update_teachers \
             -p 8012:8012 \
-            -e DB_HOST=$DB_HOST \
-            -e DB_PORT=$DB_PORT \
-            -e DB_USER=$DB_USER \
-            -e DB_PASSWORD=$DB_PASSWORD \
-            -e DB_NAME=$DB_NAME \
+            -e DB_HOST=${{ secrets.DB_HOST_TEACHER }} \
+            -e DB_PORT_TEACHER='5432' \
+            -e DB_USER=${{ secrets.DB_USER_TEACHER }} \
+            -e DB_PASSWORD=${{ secrets.DB_PASSWORD_TEACHER }} \
+            -e DB_NAME=${{ secrets.DB_NAME_TEACHER }} \
             ${{ secrets.DOCKER_USERNAME }}/update_teachers:latest
 
           echo "🔍 Verificando si los contenedores están corriendo..."
