@@ -12,13 +12,14 @@ import (
 )
 
 func main() {
-	// Cargar variables de entorno desde .env
+	// Cargar variables de entorno desde .env asda
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
-	// Conexión a la base de datos
+	// Conexión a la base de dato
+
 	db.Connect()
 
 	// Configurar rutas
