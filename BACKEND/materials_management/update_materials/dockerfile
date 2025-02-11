@@ -14,7 +14,7 @@ COPY . .
 # Build the Go application
 RUN go build -o main .
 
-# Expose the port dynamically (defaulting to 8081)
+# Expose the port dynamically
 ARG APP_PORT=8081
 ENV APP_PORT=${APP_PORT}
 EXPOSE ${APP_PORT}
