@@ -1,0 +1,150 @@
+name: Docker Image CI/CD for Teacher Management Services
+
+on:
+  push:
+    branches:
+      - test
+    paths:
+      - 'BACKEND/teacher_management/**'
+  pull_request:
+    paths:
+      - 'BACKEND/teacher_management/**'
+    branches: ["test", "main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 📥 Paso 1: Checkout del repositorio
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # 🛠️ Paso 2: Verificar estructura del repositorio en GitHub Actions
+    - name: Debug repository structure
+      run: |
+        echo "📂 Listando archivos en el workspace..."
+        ls -R $GITHUB_WORKSPACE
+
+    # 🔑 Paso 3: Login en Docker Hub
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    # 🐳 Paso 4: Construcción de imágenes Docker para cada microservicio
+    - name: Build Docker images
+      run: |
+        docker build $GITHUB_WORKSPACE/BACKEND/teacher_management/created_teachers/. \
+          --file $GITHUB_WORKSPACE/BACKEND/teacher_management/created_teachers/Dockerfile \
+          -t ${{ secrets.DOCKER_USERNAME }}/created_teachers:latest
+        
+        docker build $GITHUB_WORKSPACE/BACKEND/teacher_management/delete_teachers/. \
+          --file $GITHUB_WORKSPACE/BACKEND/teacher_management/delete_teachers/Dockerfile \
+          -t ${{ secrets.DOCKER_USERNAME }}/delete_teachers:latest
+
+        docker build $GITHUB_WORKSPACE/BACKEND/teacher_management/read_teachers/. \
+          --file $GITHUB_WORKSPACE/BACKEND/teacher_management/read_teachers/Dockerfile \
+          -t ${{ secrets.DOCKER_USERNAME }}/read_teachers:latest
+
+        docker build $GITHUB_WORKSPACE/BACKEND/teacher_management/update_teachers/. \
+          --file $GITHUB_WORKSPACE/BACKEND/teacher_management/update_teachers/Dockerfile \
+          -t ${{ secrets.DOCKER_USERNAME }}/update_teachers:latest
+
+    # 📤 Paso 5: Subir imágenes a Docker Hub
+    - name: Push Docker images to Docker Hub
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/created_teachers:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/delete_teachers:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/read_teachers:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/update_teachers:latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    # 📡 Paso 1: Conectar al servidor EC2 usando SSH
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.EC2_HOST_TEACHER_MANAGEMENT }}
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY_TEACHER }}
+        port: 22
+        script: |
+          echo "🔄 Exportando variables de entorno..."
+          echo "export DB_HOST_TEACHER=${{ secrets.DB_HOST_TEACHER }}" >> ~/.bashrc
+          echo "export DB_USER_TEACHER=${{ secrets.DB_USER_TEACHER}}" >> ~/.bashrc
+          echo "export DB_PASSWORD_TEACHER=${{ secrets.DB_PASSWORD_TEACHER }}" >> ~/.bashrc
+          echo "export DB_NAME_TEACHER=${{ secrets.DB_NAME_TEACHER }}" >> ~/.bashrc
+          source ~/.bashrc
+
+          echo "📦 Navegando al directorio del proyecto..."
+          cd ~/appSchool/BACKEND/teacher_management
+
+          echo "🛠️ Verificando si Docker está instalado..."
+          if ! command -v docker &> /dev/null; then
+            echo "🔧 Instalando Docker..."
+            sudo apt update -y
+            sudo apt install -y docker.io
+            sudo systemctl start docker
+            sudo usermod -aG docker ubuntu
+          fi
+
+          echo "🛑 Deteniendo y eliminando contenedores previos..."
+          sudo docker stop created_teachers || true
+          sudo docker rm created_teachers || true
+          sudo docker stop delete_teachers || true
+          sudo docker rm delete_teachers || true
+          sudo docker stop read_teachers || true
+          sudo docker rm read_teachers || true
+          sudo docker stop update_teachers || true
+          sudo docker rm update_teachers || true
+
+          echo "⬇️ Descargando la última imagen desde Docker Hub..."
+          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/created_teachers:latest
+          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/delete_teachers:latest
+          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/read_teachers:latest
+          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/update_teachers:latest
+
+          echo "🚀 Ejecutando los nuevos contenedores..."
+          sudo docker run -d \
+            --name created_teachers \
+            -p 8010:8010 \
+            -e DB_HOST_TEACHER=${{ secrets.DB_HOST_TEACHER }} \
+            -e DB_USER_TEACHER=${{ secrets.DB_USER_TEACHER }} \
+            -e DB_PASSWORD_TEACHER=${{ secrets.DB_PASSWORD_TEACHER }} \
+            -e DB_NAME_TEACHER=${{ secrets.DB_NAME_TEACHER }} \
+            ${{ secrets.DOCKER_USERNAME }}/created_teachers:latest
+
+          sudo docker run -d \
+            --name delete_teachers \
+            -p 8013:8013 \
+            -e DB_HOST_TEACHER=${{ secrets.DB_HOST_TEACHER }} \
+            -e DB_USER_TEACHER=${{ secrets.DB_USER_TEACHER }} \
+            -e DB_PASSWORD_TEACHER=${{ secrets.DB_PASSWORD_TEACHER }} \
+            -e DB_NAME_TEACHER=${{ secrets.DB_NAME_TEACHER }} \
+            ${{ secrets.DOCKER_USERNAME }}/delete_teachers:latest
+
+          sudo docker run -d \
+            --name read_teachers \
+            -p 8011:8011 \
+            -e DB_HOST_TEACHER=${{ secrets.DB_HOST_TEACHER }} \
+            -e DB_USER_TEACHER=${{ secrets.DB_USER_TEACHER }} \
+            -e DB_PASSWORD_TEACHER=${{ secrets.DB_PASSWORD_TEACHER }} \
+            -e DB_NAME_TEACHER=${{ secrets.DB_NAME_TEACHER }} \
+            ${{ secrets.DOCKER_USERNAME }}/read_teachers:latest
+
+          sudo docker run -d \
+            --name update_teachers \
+            -p 8012:8012 \
+            -e DB_HOST_TEACHER=${{ secrets.DB_HOST_TEACHER }} \
+            -e DB_USER_TEACHER=${{ secrets.DB_USER_TEACHER }} \
+            -e DB_PASSWORD_TEACHER=${{ secrets.DB_PASSWORD_TEACHER }} \
+            -e DB_NAME_TEACHER=${{ secrets.DB_NAME_TEACHER }} \
+            ${{ secrets.DOCKER_USERNAME }}/update_teachers:latest
+
+          echo "🔍 Verificando si los contenedores están corriendo..."
+          sudo docker ps
