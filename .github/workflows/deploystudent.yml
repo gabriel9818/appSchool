@@ -6,26 +6,35 @@ on:
       - test
     paths:
       - 'BACKEND/student_registration/**'
+  pull_request:
+    paths:
+      - 'BACKEND/student_registration/**'
+    branches: ["test", "main"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
+    # 📥 1. Checkout del repositorio
     - name: Checkout code
       uses: actions/checkout@v3
 
+    # 🔑 2. Login en Docker Hub
     - name: Log in to Docker Hub
       uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
+    # 🐳 3. Construcción de la imagen Docker
     - name: Build Docker image
       run: |
         docker build $GITHUB_WORKSPACE/BACKEND/student_registration/. \
+          --file $GITHUB_WORKSPACE/BACKEND/student_registration/Dockerfile \
           -t ${{ secrets.DOCKER_USERNAME }}/student_registration_php:latest
 
+    # 📤 4. Subir la imagen a Docker Hub
     - name: Push Docker image to Docker Hub
       run: |
         docker push ${{ secrets.DOCKER_USERNAME }}/student_registration_php:latest
@@ -35,6 +44,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    # 📡 1. Conectar a la instancia EC2
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.8
       with:
@@ -43,32 +53,58 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY_STUDENT }}
         port: 22
         script: |
-          echo "Actualizando paquetes e instalando Nginx y PHP-FPM..."
+          echo "🛠 Instalando Nginx y PHP-FPM..."
           sudo apt update -y
-          sudo apt install -y nginx php-fpm
+          sudo apt install -y nginx php8.1-fpm unzip curl
 
-          echo "Configurando Nginx..."
-          sudo mv /home/ubuntu/appSchool/BACKEND/student_registration/nginx.conf /etc/nginx/sites-available/default
-          sudo systemctl restart nginx
-
-          echo "Deteniendo y eliminando contenedor previo..."
+          echo "🚀 Deteniendo contenedor anterior..."
           sudo docker stop student_registration_php || true
           sudo docker rm student_registration_php || true
           
-          echo "Descargando la última imagen desde Docker Hub..."
+          echo "⬇️ Descargando la última imagen desde Docker Hub..."
           sudo docker pull ${{ secrets.DOCKER_USERNAME }}/student_registration_php:latest
           
-          echo "Ejecutando el nuevo contenedor en el puerto 9000..."
-          sudo docker run -d \
-            --name student_registration_php \
-            -v /var/www/html:/var/www/html \
-            -p 9000:9000 \
+          echo "🎯 Ejecutando el contenedor en segundo plano..."
+          sudo docker run -d --name student_registration_php -p 9000:9000 \
             ${{ secrets.DOCKER_USERNAME }}/student_registration_php:latest
 
-          echo "Verificando si el contenedor está corriendo..."
-          if sudo docker ps -f name=student_registration_php | grep student_registration_php; then
-            echo "✅ Contenedor 'student_registration_php' corriendo correctamente en puerto 9000."
-          else
-            echo "❌ Error al iniciar el contenedor. Revisa los logs."
-            exit 1
-          fi
+          echo "🗑 Limpiando archivos antiguos en /var/www/html/..."
+          sudo rm -rf /var/www/html/*
+          
+          echo "📂 Copiando archivos desde el contenedor a la instancia..."
+          sudo docker cp student_registration_php:/var/www/html/. /var/www/html/
+
+          echo "🔧 Configurando permisos..."
+          sudo chown -R www-data:www-data /var/www/html
+          sudo chmod -R 755 /var/www/html
+
+          echo "⚙️ Configurando Nginx..."
+          cat <<EOF | sudo tee /etc/nginx/sites-available/default
+          server {
+              listen 80;
+              server_name _;
+
+              root /var/www/html/public;
+              index index.php index.html index.htm;
+
+              location / {
+                  try_files \$uri \$uri/ =404;
+              }
+
+              location ~ \.php$ {
+                  include fastcgi_params;
+                  fastcgi_pass 127.0.0.1:9000;
+                  fastcgi_index index.php;
+                  fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+              }
+
+              error_log /var/log/nginx/error.log;
+              access_log /var/log/nginx/access.log;
+          }
+          EOF
+
+          echo "🔄 Reiniciando Nginx y PHP-FPM..."
+          sudo systemctl restart nginx
+          sudo systemctl restart php8.1-fpm
+
+          echo "✅ Despliegue completado en EC2"

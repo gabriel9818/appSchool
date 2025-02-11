@@ -4,7 +4,7 @@ require_once __DIR__ . '/../src/StudentController.php';
 // Obtener la ruta solicitada
 $uri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
 
-// Enrutamiento básico 
+// Enrutamiento básico
 if ($uri === 'student' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     StudentController::store();
 } else {
