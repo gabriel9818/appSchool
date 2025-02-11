@@ -79,7 +79,7 @@ jobs:
           echo "export DB_USER=${{ secrets.DB_USER_TEACHER }}" >> ~/.bashrc
           echo "export DB_PASSWORD=${{ secrets.DB_PASSWORD_TEACHER }}" >> ~/.bashrc
           echo "export DB_NAME=${{ secrets.DB_NAME_TEACHER }}" >> ~/.bashrc
-          echo "export DB_PORT_TEACHER='5432'" >> ~/.bashrc
+          echo "export DB_PORT_TEACHER=5432" >> ~/.bashrc
           source ~/.bashrc
 
           echo "📦 Navegando al directorio del proyecto..."
@@ -115,7 +115,7 @@ jobs:
             --name created_teachers \
             -p 8010:8010 \
             -e DB_HOST=${{ secrets.DB_HOST_TEACHER }} \
-            -e DB_PORT_TEACHER='5432' \
+            -e DB_PORT_TEACHER=5432 \
             -e DB_USER=${{ secrets.DB_USER_TEACHER }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD_TEACHER }} \
             -e DB_NAME=${{ secrets.DB_NAME_TEACHER }} \
@@ -125,7 +125,7 @@ jobs:
             --name delete_teachers \
             -p 8013:8013 \
             -e DB_HOST=${{ secrets.DB_HOST_TEACHER }} \
-            -e DB_PORT_TEACHER='5432' \
+            -e DB_PORT_TEACHER=5432 \
             -e DB_USER=${{ secrets.DB_USER_TEACHER }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD_TEACHER }} \
             -e DB_NAME=${{ secrets.DB_NAME_TEACHER }} \
@@ -135,7 +135,7 @@ jobs:
             --name read_teachers \
             -p 8011:8011 \
             -e DB_HOST=${{ secrets.DB_HOST_TEACHER }} \
-            -e DB_PORT_TEACHER='5432' \
+            -e DB_PORT_TEACHER=5432 \
             -e DB_USER=${{ secrets.DB_USER_TEACHER }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD_TEACHER }} \
             -e DB_NAME=${{ secrets.DB_NAME_TEACHER }} \
@@ -145,7 +145,7 @@ jobs:
             --name update_teachers \
             -p 8012:8012 \
             -e DB_HOST=${{ secrets.DB_HOST_TEACHER }} \
-            -e DB_PORT_TEACHER='5432' \
+            -e DB_PORT_TEACHER=5432 \
             -e DB_USER=${{ secrets.DB_USER_TEACHER }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD_TEACHER }} \
             -e DB_NAME=${{ secrets.DB_NAME_TEACHER }} \
