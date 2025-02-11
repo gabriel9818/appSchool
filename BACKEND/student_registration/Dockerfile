@@ -27,6 +27,6 @@ RUN composer install --no-dev --prefer-dist --optimize-autoloader
 RUN chown -R www-data:www-data /var/www/html && chmod -R 775 /var/www/html
 
 # Exponer puerto de PHP-FPM
-EXPOSE 9000
+EXPOSE 9050
 
 CMD ["php-fpm"]
