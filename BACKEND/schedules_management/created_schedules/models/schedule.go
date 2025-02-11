@@ -1,5 +1,6 @@
 package models
 
+//Models
 type Schedule struct {
 	ID          string `json:"id"`                    // UUID como string
 	Day         string `json:"day"`                   // Día
