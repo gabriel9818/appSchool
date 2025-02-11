@@ -38,9 +38,9 @@ jobs:
           sudo docker pull ${{ secrets.DOCKER_USERNAME }}/student_registration_php:latest
 
           echo "🚀 Iniciando el nuevo contenedor..."
-          sudo docker run -d \
+            sudo docker run -d \
             --name student_registration_php \
-            --network=host \
+            -p 9050:9050 \  # 🔄 Usamos un puerto diferente
             -e DB_HOST=${{ secrets.DB_HOST_STUDENT }} \
             -e DB_USER=${{ secrets.DB_USER_STUDENT }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD_STUDENT }} \
