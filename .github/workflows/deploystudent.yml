@@ -24,10 +24,16 @@ jobs:
         port: 22
         script: |
           echo "📂 Moviéndonos al directorio donde configuraste la aplicación..."
-          cd /var/www/html  # 🚀 Usa la ruta donde ya configuraste todo manualmente
+          cd /var/www/html || exit 1  # 🚀 Usa la ruta donde configuraste todo manualmente
 
-          echo "📦 Descargando la última versión del código desde GitHub..."
-          sudo git pull origin test  # 🔄 Solo actualiza el código sin modificar nada más
+          echo "📦 Verificando si el directorio es un repositorio Git..."
+          if [ ! -d ".git" ]; then
+            echo "⚠️ No es un repositorio Git. Clonando el repositorio..."
+            sudo git clone https://github.com/${{ secrets.GITHUB_USERNAME }}/student_registration.git /var/www/html
+          else
+            echo "✅ Repositorio Git encontrado. Actualizando código..."
+            sudo git pull origin test
+          fi
 
           echo "📦 Deteniendo contenedor previo..."
           sudo docker stop student_registration_php || true
@@ -39,12 +45,12 @@ jobs:
           echo "🚀 Iniciando nuevo contenedor sin modificar configuración..."
           sudo docker run -d \
             --name student_registration_php \
-            --network=host \  # 🔄 Evita conflictos de puertos
+            --network=host \
             -e DB_HOST=${{ secrets.DB_HOST_STUDENT }} \
             -e DB_USER=${{ secrets.DB_USER_STUDENT }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD_STUDENT }} \
             -e DB_NAME=${{ secrets.DB_NAME_STUDENT }} \
-            ${{ secrets.DOCKER_USERNAME }}/student_registration_php:latest
+            ${{ secrets.DOCKER_USERNAME }}/student_registration_php:latest || exit 1
 
           echo "🔄 Reiniciando Nginx para aplicar cambios..."
           sudo systemctl restart nginx
