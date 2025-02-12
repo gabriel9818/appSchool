@@ -30,25 +30,30 @@ jobs:
           sudo yum install -y docker
           sudo systemctl start docker
           sudo usermod -aG docker ec2-user
-          newgrp docker
+
+          # Reiniciar la sesión para que ec2-user tenga permisos
+          newgrp docker || true
+
+          # Instalar Docker Compose manualmente en Amazon Linux
           sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
 
           echo "🔑 Iniciando sesión en Docker Hub..."
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
           echo "🛑 Eliminando contenedores en conflicto..."
-          docker stop created_schedules delete_schedules read_schedules update_schedules mysql_db || true
-          docker rm created_schedules delete_schedules read_schedules update_schedules mysql_db || true
-          docker rmi -f gabrielrv/created_schedules:latest || true
-          docker rmi -f gabrielrv/delete_schedules:latest || true
-          docker rmi -f gabrielrv/read_schedules:latest || true
-          docker rmi -f gabrielrv/update_schedules:latest || true
-          docker network prune -f || true
-          docker volume prune -f || true
+          sudo docker stop created_schedules delete_schedules read_schedules update_schedules mysql_db || true
+          sudo docker rm created_schedules delete_schedules read_schedules update_schedules mysql_db || true
+          sudo docker rmi -f gabrielrv/created_schedules:latest || true
+          sudo docker rmi -f gabrielrv/delete_schedules:latest || true
+          sudo docker rmi -f gabrielrv/read_schedules:latest || true
+          sudo docker rmi -f gabrielrv/update_schedules:latest || true
+          sudo docker network prune -f || true
+          sudo docker volume prune -f || true
 
           echo "📦 Moviéndonos al directorio del proyecto..."
-          cd ~/appSchool/BACKEND/schedules_management || mkdir -p ~/appSchool/BACKEND/schedules_management && cd ~/appSchool/BACKEND/schedules_management
+          mkdir -p /home/ec2-user/appSchool/BACKEND/schedules_management
+          cd /home/ec2-user/appSchool/BACKEND/schedules_management
 
           echo "📂 Creando archivo .env con GitHub Secrets..."
           cat <<EOF > .env
@@ -60,14 +65,14 @@ jobs:
           EOF
 
           echo "📥 Descargando imágenes de Docker..."
-          docker pull gabrielrv/created_schedules:latest
-          docker pull gabrielrv/delete_schedules:latest
-          docker pull gabrielrv/read_schedules:latest
-          docker pull gabrielrv/update_schedules:latest
-          docker pull mysql:latest
+          sudo docker pull gabrielrv/created_schedules:latest
+          sudo docker pull gabrielrv/delete_schedules:latest
+          sudo docker pull gabrielrv/read_schedules:latest
+          sudo docker pull gabrielrv/update_schedules:latest
+          sudo docker pull mysql:latest
 
           echo "🚀 Desplegando servicios con Docker Compose..."
-          docker-compose up -d --force-recreate --remove-orphans
+          sudo docker-compose up -d --force-recreate --remove-orphans
 
           echo "🔍 Verificando contenedores en ejecución..."
-          docker ps
+          sudo docker ps
