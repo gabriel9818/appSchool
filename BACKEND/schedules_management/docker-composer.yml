@@ -1,38 +1,50 @@
 version: '3.8'
 
 services:
-  created_teachers:
-    image: "${DOCKER_USERNAME}/created_teachers:latest"
-    container_name: created_teachers
+  created_schedules:
+    image: gabrielrv/created_schedules:latest
+    container_name: created_schedules
     restart: always
     ports:
-      - "8010:8010"
+      - "6000:6000"
     env_file:
       - .env
+    working_dir: /app
+    volumes:
+      - ./created_schedules/.env:/app/.env
 
-  delete_teachers:
-    image: "${DOCKER_USERNAME}/delete_teachers:latest"
-    container_name: delete_teachers
+  delete_schedules:
+    image: gabrielrv/delete_schedules:latest
+    container_name: delete_schedules
     restart: always
     ports:
-      - "8013:8013"
+      - "6002:6002"
     env_file:
       - .env
+    working_dir: /app
+    volumes:
+      - ./delete_schedules/.env:/app/.env
 
-  read_teachers:
-    image: "${DOCKER_USERNAME}/read_teachers:latest"
-    container_name: read_teachers
+  read_schedules:
+    image: gabrielrv/read_schedules:latest
+    container_name: read_schedules
     restart: always
     ports:
-      - "8011:8011"
+      - "6001:6001"
     env_file:
       - .env
+    working_dir: /app
+    volumes:
+      - ./read_schedules/.env:/app/.env
 
-  update_teachers:
-    image: "${DOCKER_USERNAME}/update_teachers:latest"
-    container_name: update_teachers
+  update_schedules:
+    image: gabrielrv/update_schedules:latest
+    container_name: update_schedules
     restart: always
     ports:
-      - "8012:8012"
+      - "6003:6003"
     env_file:
       - .env
+    working_dir: /app
+    volumes:
+      - ./update_schedules/.env:/app/.env
