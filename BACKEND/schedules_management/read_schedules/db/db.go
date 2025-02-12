@@ -22,5 +22,5 @@ func Connect() {
 		log.Fatal("Database is not reachable:", err)
 	}
 
-	log.Println("Database connected successfully! :)")
+	log.Println("Database connected successfully! ")
 }

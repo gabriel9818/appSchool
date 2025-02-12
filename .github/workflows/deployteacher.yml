@@ -1,11 +1,11 @@
-name: Deploy Teacher Management Services to AWS
+name: Deploy Schedules Management Services to AWS
 
 on:
   push:
     branches:
       - test
     paths:
-      - 'BACKEND/teacher_management/**'
+      - 'BACKEND/schedules_management/**'
 
 jobs:
   deploy:
@@ -18,9 +18,9 @@ jobs:
     - name: 🔑 Acceder al servidor EC2 y desplegar
       uses: appleboy/ssh-action@v0.1.8
       with:
-        host: ${{ secrets.EC2_HOST_TEACHER }}
-        username: ubuntu
-        key: ${{ secrets.EC2_SSH_KEY_TEACHER}}
+        host: ${{ secrets.AWS_HOST_SCHEDULES }}
+        username: ec2-user
+        key: ${{ secrets.AWS_SSH_KEY_SCHEDULES }}
         port: 22
         script: |
           echo "✅ Conexión establecida con EC2"
@@ -28,10 +28,17 @@ jobs:
           echo "🛠️ Verificando si Docker y Docker Compose están instalados..."
           if ! command -v docker &> /dev/null; then
             echo "🔧 Instalando Docker..."
-            sudo apt update -y
-            sudo apt install -y docker.io docker-compose
+            sudo yum update -y
+            sudo yum install -y docker
             sudo systemctl start docker
-            sudo usermod -aG docker ubuntu
+            sudo usermod -aG docker ec2-user
+            newgrp docker
+          fi
+
+          if ! command -v docker-compose &> /dev/null; then
+            echo "🔧 Instalando Docker Compose..."
+            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
           fi
 
           echo "🔑 Iniciando sesión en Docker Hub..."
@@ -40,71 +47,71 @@ jobs:
           echo "🛑 Eliminando contenedores e imágenes en conflicto..."
           docker stop $(docker ps -aq) || true
           docker rm $(docker ps -aq) || true
-          docker rmi -f gabrielrv/created_teachers:latest || true
-          docker rmi -f gabrielrv/delete_teachers:latest || true
-          docker rmi -f gabrielrv/read_teachers:latest || true
-          docker rmi -f gabrielrv/update_teachers:latest || true
+          docker rmi -f gabrielrv/created_schedules:latest || true
+          docker rmi -f gabrielrv/delete_schedules:latest || true
+          docker rmi -f gabrielrv/read_schedules:latest || true
+          docker rmi -f gabrielrv/update_schedules:latest || true
           docker network prune -f || true
           docker volume prune -f || true
 
           echo "📦 Moviéndonos al directorio del proyecto..."
-          cd ~/appSchool/BACKEND/teacher_management || mkdir -p ~/appSchool/BACKEND/teacher_management && cd ~/appSchool/BACKEND/teacher_management
+          cd /home/ec2-user/appSchool/BACKEND/schedules_management || mkdir -p /home/ec2-user/appSchool/BACKEND/schedules_management && cd /home/ec2-user/appSchool/BACKEND/schedules_management
 
           echo "📂 Creando archivo .env..."
           cat <<EOF > .env
-          DB_HOST=${{ secrets.DB_HOST_TEACHER }}
-          DB_PORT=${{ secrets.DB_PORT_TEACHER }}
-          DB_USER=${{ secrets.DB_USER_TEACHER }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD_TEACHER }}
-          DB_NAME=${{ secrets.DB_NAME_TEACHER }}
+          DB_HOST=${{ secrets.DB_HOST_SCHEDULES }}
+          DB_PORT=${{ secrets.DB_PORT_SCHEDULES }}
+          DB_USER=${{ secrets.DB_USER_SCHEDULES }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD_SCHEDULES }}
+          DB_NAME=${{ secrets.DB_NAME_SCHEDULES }}
           EOF
 
           echo "⬇️ Creando nuevo docker-compose.yml..."
           cat <<EOF > docker-compose.yml
           version: '3.8'
           services:
-            created_teachers:
-              image: gabrielrv/created_teachers:latest
-              container_name: created_teachers
+            created_schedules:
+              image: gabrielrv/created_schedules:latest
+              container_name: created_schedules
               restart: always
               ports:
-                - "8010:8010"
+                - "6000:6000"
               env_file:
                 - .env
 
-            delete_teachers:
-              image: gabrielrv/delete_teachers:latest
-              container_name: delete_teachers
+            delete_schedules:
+              image: gabrielrv/delete_schedules:latest
+              container_name: delete_schedules
               restart: always
               ports:
-                - "8013:8013"
+                - "6002:6002"
               env_file:
                 - .env
 
-            read_teachers:
-              image: gabrielrv/read_teachers:latest
-              container_name: read_teachers
+            read_schedules:
+              image: gabrielrv/read_schedules:latest
+              container_name: read_schedules
               restart: always
               ports:
-                - "8011:8011"
+                - "6001:6001"
               env_file:
                 - .env
 
-            update_teachers:
-              image: gabrielrv/update_teachers:latest
-              container_name: update_teachers
+            update_schedules:
+              image: gabrielrv/update_schedules:latest
+              container_name: update_schedules
               restart: always
               ports:
-                - "8012:8012"
+                - "6003:6003"
               env_file:
                 - .env
           EOF
 
           echo "📥 Descargando imágenes de Docker..."
-          docker pull gabrielrv/created_teachers:latest
-          docker pull gabrielrv/delete_teachers:latest
-          docker pull gabrielrv/read_teachers:latest
-          docker pull gabrielrv/update_teachers:latest
+          docker pull gabrielrv/created_schedules:latest
+          docker pull gabrielrv/delete_schedules:latest
+          docker pull gabrielrv/read_schedules:latest
+          docker pull gabrielrv/update_schedules:latest
 
           echo "🚀 Desplegando servicios con Docker Compose..."
           docker-compose up -d --force-recreate --remove-orphans
