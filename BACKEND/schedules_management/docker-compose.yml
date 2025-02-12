@@ -7,12 +7,8 @@ services:
     restart: always
     ports:
       - "6000:6000"
-    environment:
-      DB_HOST: "${DB_HOST}"
-      DB_PORT: "${DB_PORT}"
-      DB_USER: "${DB_USER}"
-      DB_PASSWORD: "${DB_PASSWORD}"
-      DB_NAME: "${DB_NAME}"
+    env_file:
+      - .env  # Asegura que este archivo exista en el mismo directorio
 
   delete_schedules:
     image: gabrielrv/delete_schedules:latest
@@ -20,12 +16,8 @@ services:
     restart: always
     ports:
       - "6002:6002"
-    environment:
-      DB_HOST: "${DB_HOST}"
-      DB_PORT: "${DB_PORT}"
-      DB_USER: "${DB_USER}"
-      DB_PASSWORD: "${DB_PASSWORD}"
-      DB_NAME: "${DB_NAME}"
+    env_file:
+      - .env
 
   read_schedules:
     image: gabrielrv/read_schedules:latest
@@ -33,12 +25,8 @@ services:
     restart: always
     ports:
       - "6001:6001"
-    environment:
-      DB_HOST: "${DB_HOST}"
-      DB_PORT: "${DB_PORT}"
-      DB_USER: "${DB_USER}"
-      DB_PASSWORD: "${DB_PASSWORD}"
-      DB_NAME: "${DB_NAME}"
+    env_file:
+      - .env
 
   update_schedules:
     image: gabrielrv/update_schedules:latest
@@ -46,9 +34,5 @@ services:
     restart: always
     ports:
       - "6003:6003"
-    environment:
-      DB_HOST: "${DB_HOST}"
-      DB_PORT: "${DB_PORT}"
-      DB_USER: "${DB_USER}"
-      DB_PASSWORD: "${DB_PASSWORD}"
-      DB_NAME: "${DB_NAME}"
+    env_file:
+      - .env
