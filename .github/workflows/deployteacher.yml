@@ -49,74 +49,8 @@ jobs:
           echo "📦 Moviéndonos al directorio del proyecto..."
           cd ~/appSchool/BACKEND/teacher_management || mkdir -p ~/appSchool/BACKEND/teacher_management && cd ~/appSchool/BACKEND/teacher_management
 
-          echo "🛠️ Verificando si Docker está instalado..."
-          if ! command -v docker &> /dev/null; then
-            echo "🔧 Instalando Docker..."
-            sudo apt update -y
-            sudo apt install -y docker.io
-            sudo systemctl start docker
-            sudo usermod -aG docker ubuntu
-          fi
-
           echo "🛑 Deteniendo contenedores existentes..."
           sudo docker compose down || sudo docker-compose down
-
-          echo "⬇️ Creando nuevo docker-compose.yml..."
-          cat <<EOF > docker-compose.yml
-          version: '3.8'
-          services:
-            created_teachers:
-              image: ${{ secrets.DOCKER_USERNAME }}/created_teachers:latest
-              container_name: created_teachers
-              restart: always
-              ports:
-                - "8010:8010"
-              environment:
-                DB_HOST: \$DB_HOST_TEACHER
-                DB_PORT: \$DB_PORT_TEACHER
-                DB_USER: \$DB_USER_TEACHER
-                DB_PASSWORD: \$DB_PASSWORD_TEACHER
-                DB_NAME: \$DB_NAME_TEACHER
-
-            delete_teachers:
-              image: ${{ secrets.DOCKER_USERNAME }}/delete_teachers:latest
-              container_name: delete_teachers
-              restart: always
-              ports:
-                - "8013:8013"
-              environment:
-                DB_HOST: \$DB_HOST_TEACHER
-                DB_PORT: \$DB_PORT_TEACHER
-                DB_USER: \$DB_USER_TEACHER
-                DB_PASSWORD: \$DB_PASSWORD_TEACHER
-                DB_NAME: \$DB_NAME_TEACHER
-
-            read_teachers:
-              image: ${{ secrets.DOCKER_USERNAME }}/read_teachers:latest
-              container_name: read_teachers
-              restart: always
-              ports:
-                - "8011:8011"
-              environment:
-                DB_HOST: \$DB_HOST_TEACHER
-                DB_PORT: \$DB_PORT_TEACHER
-                DB_USER: \$DB_USER_TEACHER
-                DB_PASSWORD: \$DB_PASSWORD_TEACHER
-                DB_NAME: \$DB_NAME_TEACHER
-
-            update_teachers:
-              image: ${{ secrets.DOCKER_USERNAME }}/update_teachers:latest
-              container_name: update_teachers
-              restart: always
-              ports:
-                - "8012:8012"
-              environment:
-                DB_HOST: \$DB_HOST_TEACHER
-                DB_PORT: \$DB_PORT_TEACHER
-                DB_USER: \$DB_USER_TEACHER
-                DB_PASSWORD: \$DB_PASSWORD_TEACHER
-                DB_NAME: \$DB_NAME_TEACHER
-          EOF
 
           echo "🚀 Desplegando servicios con Docker Compose..."
           sudo docker compose up -d || sudo docker-compose up -d
