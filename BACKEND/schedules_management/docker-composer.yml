@@ -11,7 +11,7 @@ services:
       - .env
     working_dir: /app
     volumes:
-      - ./created_schedules/.env:/app/.env
+      - .env:/app/.env
 
   delete_schedules:
     image: gabrielrv/delete_schedules:latest
@@ -23,7 +23,7 @@ services:
       - .env
     working_dir: /app
     volumes:
-      - ./delete_schedules/.env:/app/.env
+      - .env:/app/.env
 
   read_schedules:
     image: gabrielrv/read_schedules:latest
@@ -35,7 +35,7 @@ services:
       - .env
     working_dir: /app
     volumes:
-      - ./read_schedules/.env:/app/.env
+      - .env:/app/.env
 
   update_schedules:
     image: gabrielrv/update_schedules:latest
@@ -47,4 +47,4 @@ services:
       - .env
     working_dir: /app
     volumes:
-      - ./update_schedules/.env:/app/.env
+      - .env:/app/.env
