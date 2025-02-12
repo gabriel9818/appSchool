@@ -1,11 +1,11 @@
-name: Deploy Schedules Management Services to AWS
+name: Deploy Teacher Management Services to AWS
 
 on:
   push:
     branches:
       - test
     paths:
-      - 'BACKEND/schedules_management/**'
+      - 'BACKEND/teacher_management/**'
 
 jobs:
   deploy:
@@ -18,9 +18,9 @@ jobs:
     - name: 🔑 Acceder al servidor EC2 y desplegar
       uses: appleboy/ssh-action@v0.1.8
       with:
-        host: ${{ secrets.EC2_HOST_SCHEDULES }}
-        username: ec2-user
-        key: ${{ secrets.EC2_SSH_KEY_SCHEDULES }}
+        host: ${{ secrets.EC2_HOST_TEACHER }}
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY_TEACHER}}
         port: 22
         script: |
           echo "✅ Conexión establecida con EC2"
@@ -28,95 +28,86 @@ jobs:
           echo "🛠️ Verificando si Docker y Docker Compose están instalados..."
           if ! command -v docker &> /dev/null; then
             echo "🔧 Instalando Docker..."
-            sudo yum update -y
-            sudo yum install -y docker
-
-            echo "🔧 Iniciando Docker y añadiendo permisos..."
+            sudo apt update -y
+            sudo apt install -y docker.io docker-compose
             sudo systemctl start docker
-            sudo usermod -aG docker ec2-user
-            newgrp docker  # Aplicar cambios sin reiniciar sesión
-          fi
-
-          if ! command -v docker-compose &> /dev/null; then
-            echo "🔧 Instalando Docker Compose..."
-            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
-            sudo chmod +x /usr/local/bin/docker-compose
+            sudo usermod -aG docker ubuntu
           fi
 
           echo "🔑 Iniciando sesión en Docker Hub..."
-          echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
           echo "🛑 Eliminando contenedores e imágenes en conflicto..."
-          sudo docker stop $(sudo docker ps -aq) || true
-          sudo docker rm $(sudo docker ps -aq) || true
-          sudo docker rmi -f gabrielrv/created_schedules:latest || true
-          sudo docker rmi -f gabrielrv/delete_schedules:latest || true
-          sudo docker rmi -f gabrielrv/read_schedules:latest || true
-          sudo docker rmi -f gabrielrv/update_schedules:latest || true
-          sudo docker network prune -f || true
-          sudo docker volume prune -f || true
+          docker stop $(docker ps -aq) || true
+          docker rm $(docker ps -aq) || true
+          docker rmi -f gabrielrv/created_teachers:latest || true
+          docker rmi -f gabrielrv/delete_teachers:latest || true
+          docker rmi -f gabrielrv/read_teachers:latest || true
+          docker rmi -f gabrielrv/update_teachers:latest || true
+          docker network prune -f || true
+          docker volume prune -f || true
 
           echo "📦 Moviéndonos al directorio del proyecto..."
-          cd /home/ec2-user/appSchool/BACKEND/schedules_management || mkdir -p /home/ec2-user/appSchool/BACKEND/schedules_management && cd /home/ec2-user/appSchool/BACKEND/schedules_management
+          cd ~/appSchool/BACKEND/teacher_management || mkdir -p ~/appSchool/BACKEND/teacher_management && cd ~/appSchool/BACKEND/teacher_management
 
           echo "📂 Creando archivo .env..."
           cat <<EOF > .env
-          DB_HOST=${{ secrets.DB_HOST_SCHEDULES }}
-          DB_PORT=${{ secrets.DB_PORT_SCHEDULES }}
-          DB_USER=${{ secrets.DB_USER_SCHEDULES }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD_SCHEDULES }}
-          DB_NAME=${{ secrets.DB_NAME_SCHEDULES }}
+          DB_HOST=${{ secrets.DB_HOST_TEACHER }}
+          DB_PORT=${{ secrets.DB_PORT_TEACHER }}
+          DB_USER=${{ secrets.DB_USER_TEACHER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD_TEACHER }}
+          DB_NAME=${{ secrets.DB_NAME_TEACHER }}
           EOF
 
           echo "⬇️ Creando nuevo docker-compose.yml..."
           cat <<EOF > docker-compose.yml
           version: '3.8'
           services:
-            created_schedules:
-              image: gabrielrv/created_schedules:latest
-              container_name: created_schedules
+            created_teachers:
+              image: gabrielrv/created_teachers:latest
+              container_name: created_teachers
               restart: always
               ports:
-                - "6000:6000"
+                - "8010:8010"
               env_file:
                 - .env
 
-            delete_schedules:
-              image: gabrielrv/delete_schedules:latest
-              container_name: delete_schedules
+            delete_teachers:
+              image: gabrielrv/delete_teachers:latest
+              container_name: delete_teachers
               restart: always
               ports:
-                - "6002:6002"
+                - "8013:8013"
               env_file:
                 - .env
 
-            read_schedules:
-              image: gabrielrv/read_schedules:latest
-              container_name: read_schedules
+            read_teachers:
+              image: gabrielrv/read_teachers:latest
+              container_name: read_teachers
               restart: always
               ports:
-                - "6001:6001"
+                - "8011:8011"
               env_file:
                 - .env
 
-            update_schedules:
-              image: gabrielrv/update_schedules:latest
-              container_name: update_schedules
+            update_teachers:
+              image: gabrielrv/update_teachers:latest
+              container_name: update_teachers
               restart: always
               ports:
-                - "6003:6003"
+                - "8012:8012"
               env_file:
                 - .env
           EOF
 
           echo "📥 Descargando imágenes de Docker..."
-          sudo docker pull gabrielrv/created_schedules:latest
-          sudo docker pull gabrielrv/delete_schedules:latest
-          sudo docker pull gabrielrv/read_schedules:latest
-          sudo docker pull gabrielrv/update_schedules:latest
+          docker pull gabrielrv/created_teachers:latest
+          docker pull gabrielrv/delete_teachers:latest
+          docker pull gabrielrv/read_teachers:latest
+          docker pull gabrielrv/update_teachers:latest
 
           echo "🚀 Desplegando servicios con Docker Compose..."
-          sudo docker-compose up -d --force-recreate --remove-orphans
+          docker-compose up -d --force-recreate --remove-orphans
 
           echo "🔍 Verificando contenedores en ejecución..."
-          sudo docker ps
+          docker ps
