@@ -1,4 +1,4 @@
-name: Deploy Schedules Management to AWS
+name: Deploy Schedules Management Services to AWS
 
 on:
   push:
@@ -29,21 +29,20 @@ jobs:
           sudo yum update -y
           sudo yum install -y docker
           sudo systemctl start docker
+          sudo systemctl enable docker
           sudo usermod -aG docker ec2-user
-
-          # Reiniciar la sesión para que ec2-user tenga permisos
           newgrp docker || true
-
-          # Instalar Docker Compose manualmente en Amazon Linux
+          
+          echo "⬇️ Instalando Docker Compose..."
           sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
 
           echo "🔑 Iniciando sesión en Docker Hub..."
           echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-          echo "🛑 Eliminando contenedores en conflicto..."
-          sudo docker stop created_schedules delete_schedules read_schedules update_schedules mysql_db || true
-          sudo docker rm created_schedules delete_schedules read_schedules update_schedules mysql_db || true
+          echo "🛑 Eliminando contenedores e imágenes en conflicto..."
+          sudo docker stop $(sudo docker ps -aq) || true
+          sudo docker rm $(sudo docker ps -aq) || true
           sudo docker rmi -f gabrielrv/created_schedules:latest || true
           sudo docker rmi -f gabrielrv/delete_schedules:latest || true
           sudo docker rmi -f gabrielrv/read_schedules:latest || true
@@ -55,7 +54,7 @@ jobs:
           mkdir -p /home/ec2-user/appSchool/BACKEND/schedules_management
           cd /home/ec2-user/appSchool/BACKEND/schedules_management
 
-          echo "📂 Creando archivo .env con GitHub Secrets..."
+          echo "📂 Creando archivo .env..."
           cat <<EOF > .env
           DB_HOST=${{ secrets.DB_HOST_SCHEDULES }}
           DB_PORT=${{ secrets.DB_PORT_SCHEDULES }}
@@ -64,12 +63,52 @@ jobs:
           DB_NAME=${{ secrets.DB_NAME_SCHEDULES }}
           EOF
 
+          echo "⬇️ Creando nuevo docker-compose.yml..."
+          cat <<EOF > docker-compose.yml
+          version: '3.8'
+          services:
+            created_schedules:
+              image: gabrielrv/created_schedules:latest
+              container_name: created_schedules
+              restart: always
+              ports:
+                - "6000:6000"
+              env_file:
+                - .env
+
+            delete_schedules:
+              image: gabrielrv/delete_schedules:latest
+              container_name: delete_schedules
+              restart: always
+              ports:
+                - "6002:6002"
+              env_file:
+                - .env
+
+            read_schedules:
+              image: gabrielrv/read_schedules:latest
+              container_name: read_schedules
+              restart: always
+              ports:
+                - "6001:6001"
+              env_file:
+                - .env
+
+            update_schedules:
+              image: gabrielrv/update_schedules:latest
+              container_name: update_schedules
+              restart: always
+              ports:
+                - "6003:6003"
+              env_file:
+                - .env
+          EOF
+
           echo "📥 Descargando imágenes de Docker..."
           sudo docker pull gabrielrv/created_schedules:latest
           sudo docker pull gabrielrv/delete_schedules:latest
           sudo docker pull gabrielrv/read_schedules:latest
           sudo docker pull gabrielrv/update_schedules:latest
-          sudo docker pull mysql:latest
 
           echo "🚀 Desplegando servicios con Docker Compose..."
           sudo docker-compose up -d --force-recreate --remove-orphans
