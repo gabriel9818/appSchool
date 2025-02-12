@@ -3,7 +3,7 @@ name: Deploy Teacher Management Services
 on:
   push:
     branches:
-      - main
+      - test
     paths:
       - 'BACKEND/teacher_management/**'
 
