@@ -59,17 +59,16 @@ jobs:
           cd /home/ec2-user/appSchool/BACKEND/schedules_management
 
           echo "📂 Creando archivo .env..."
-          cat <<EOF > .env
-          DB_HOST=${{ secrets.DB_HOST_SCHEDULES }}
-          DB_PORT=${{ secrets.DB_PORT_SCHEDULES }}
-          DB_USER=${{ secrets.DB_USER_SCHEDULES }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD_SCHEDULES }}
-          DB_NAME=${{ secrets.DB_NAME_SCHEDULES }}
-          EOF
+          echo "DB_HOST=${{ secrets.DB_HOST_SCHEDULES }}" > .env
+          echo "DB_PORT=${{ secrets.DB_PORT_SCHEDULES }}" >> .env
+          echo "DB_USER=${{ secrets.DB_USER_SCHEDULES }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD_SCHEDULES }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME_SCHEDULES }}" >> .env
 
           echo "⬇️ Creando nuevo docker-compose.yml..."
-          cat <<EOF > docker-compose.yml
+          cat > docker-compose.yml <<EOF
           version: '3.8'
+
           services:
             created_schedules:
               image: gabrielrv/created_schedules:latest
