@@ -18,9 +18,9 @@ jobs:
     - name: 🔑 Acceder al servidor EC2
       uses: appleboy/ssh-action@v0.1.8
       with:
-        host: ${{ secrets.EC2_HOST }}
+        host: ${{ secrets.EC2_HOST_TEACHER }}
         username: ubuntu
-        key: ${{ secrets.EC2_SSH_KEY }}
+        key: ${{ secrets.EC2_SSH_KEY_TEACHER}}
         port: 22
         script: |
           echo "✅ Conexión establecida con EC2"
