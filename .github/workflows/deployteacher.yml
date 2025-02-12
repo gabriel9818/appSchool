@@ -18,14 +18,23 @@ jobs:
     - name: 🔑 Acceder al servidor EC2
       uses: appleboy/ssh-action@v0.1.8
       with:
-        host: ${{ secrets.EC2_HOST_TEACHER}}
+        host: ${{ secrets.EC2_HOST }}
         username: ubuntu
-        key: ${{ secrets.EC2_SSH_KEY_TEACHER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
         port: 22
         script: |
           echo "✅ Conexión establecida con EC2"
 
-          echo "🔄 Eliminando contenedores en conflicto..."
+          echo "🛠️ Verificando si Docker y Docker Compose están instalados..."
+          if ! command -v docker &> /dev/null; then
+            echo "🔧 Instalando Docker..."
+            sudo apt update -y
+            sudo apt install -y docker.io docker-compose
+            sudo systemctl start docker
+            sudo usermod -aG docker ubuntu
+          fi
+
+          echo "🛑 Eliminando contenedores en conflicto..."
           docker stop $(docker ps -aq) || true
           docker rm $(docker ps -aq) || true
           docker rmi -f gabrielrv/created_teachers:latest || true
@@ -37,18 +46,6 @@ jobs:
 
           echo "📦 Moviéndonos al directorio del proyecto..."
           cd ~/appSchool/BACKEND/teacher_management || mkdir -p ~/appSchool/BACKEND/teacher_management && cd ~/appSchool/BACKEND/teacher_management
-
-          echo "🛠️ Verificando si Docker está instalado..."
-          if ! command -v docker &> /dev/null; then
-            echo "🔧 Instalando Docker..."
-            sudo apt update -y
-            sudo apt install -y docker.io
-            sudo systemctl start docker
-            sudo usermod -aG docker ubuntu
-          fi
-
-          echo "🛑 Eliminando contenedores existentes..."
-          sudo docker compose down || sudo docker-compose down || true
 
           echo "⬇️ Creando nuevo docker-compose.yml..."
           cat <<EOF > docker-compose.yml
@@ -92,8 +89,14 @@ jobs:
                 - .env
           EOF
 
+          echo "📥 Descargando imágenes de Docker..."
+          docker pull gabrielrv/created_teachers:latest
+          docker pull gabrielrv/delete_teachers:latest
+          docker pull gabrielrv/read_teachers:latest
+          docker pull gabrielrv/update_teachers:latest
+
           echo "🚀 Desplegando servicios con Docker Compose..."
-          sudo docker compose up -d --force-recreate --remove-orphans || sudo docker-compose up -d --force-recreate --remove-orphans
+          docker-compose up -d --force-recreate --remove-orphans
 
           echo "🔍 Verificando contenedores en ejecución..."
-          sudo docker ps
+          docker ps
