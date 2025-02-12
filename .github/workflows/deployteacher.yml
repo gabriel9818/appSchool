@@ -52,44 +52,44 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY_TEACHER }}
         port: 22
         script: |
-          echo "🔍 Debug: Verificando conexión a EC2"
-          ssh -vvv ubuntu@${{ secrets.EC2_HOST_TEACHER_MANAGEMENT }} "echo 'Conexión exitosa'"
+          echo "🔍 Verificando conexión SSH..."
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST_TEACHER_MANAGEMENT }} "echo '✅ Conexión SSH exitosa'"
+
           echo "🔄 Exportando variables de entorno..."
-          echo "export DB_HOST_TEACHER=${{ secrets.DB_HOST_TEACHER }}" >> ~/.bashrc
-          echo "export DB_USER_TEACHER=${{ secrets.DB_USER_TEACHER }}" >> ~/.bashrc
-          echo "export DB_PASSWORD_TEACHER=${{ secrets.DB_PASSWORD_TEACHER }}" >> ~/.bashrc
-          echo "export DB_NAME_TEACHER=${{ secrets.DB_NAME_TEACHER }}" >> ~/.bashrc
-          echo "export DB_PORT_TEACHER=${{ secrets.DB_PORT_TEACHER }}" >> ~/.bashrc
-          echo "export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> ~/.bashrc
-          source ~/.bashrc
-                 
+          cat <<EOF > ~/.env
+          DB_HOST_TEACHER=${{ secrets.DB_HOST_TEACHER }}
+          DB_USER_TEACHER=${{ secrets.DB_USER_TEACHER }}
+          DB_PASSWORD_TEACHER=${{ secrets.DB_PASSWORD_TEACHER }}
+          DB_NAME_TEACHER=${{ secrets.DB_NAME_TEACHER }}
+          DB_PORT_TEACHER=${{ secrets.DB_PORT_TEACHER }}
+          DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+          EOF
+          
+          echo "📌 Cargando variables en el entorno..."
+          export $(cat ~/.env | xargs)
 
-          echo "📌 Verificando variables exportadas..."
-          env | grep -E 'DB_HOST_TEACHER|DB_PORT_TEACHER|DB_USER_TEACHER|DB_PASSWORD_TEACHER|DB_NAME_TEACHER|DOCKER_USERNAME'
-
-
-          echo "📦 Moving to the project directory..."
+          echo "📦 Moviéndonos al directorio del proyecto..."
           cd ~/appSchool/BACKEND/teacher_management || mkdir -p ~/appSchool/BACKEND/teacher_management && cd ~/appSchool/BACKEND/teacher_management
 
-          echo "🛠️ Checking if Docker is installed..."
+          echo "🛠️ Verificando si Docker está instalado..."
           if ! command -v docker &> /dev/null; then
-            echo "🔧 Installing Docker..."
+            echo "🔧 Instalando Docker..."
             sudo apt update -y
             sudo apt install -y docker.io
             sudo systemctl start docker
             sudo usermod -aG docker ubuntu
           fi
 
-          echo "🛠️ Checking if Docker Compose is installed..."
+          echo "🛠️ Verificando si Docker Compose está instalado..."
           if ! command -v docker-compose &> /dev/null; then
-            echo "🔧 Installing Docker Compose..."
+            echo "🔧 Instalando Docker Compose..."
             sudo apt install -y docker-compose
           fi
 
-          echo "🛑 Stopping existing containers..."
+          echo "🛑 Deteniendo contenedores existentes..."
           sudo docker-compose down || true
 
-          echo "⬇️ Updating docker-compose.yml..."
+          echo "⬇️ Creando archivo docker-compose.yml..."
           cat <<EOF > docker-compose.yml
           version: '3.8'
 
@@ -101,7 +101,7 @@ jobs:
               ports:
                 - "8010:8010"
               env_file:
-                - .env
+                - ~/.env
 
             delete_teachers:
               image: "\${DOCKER_USERNAME}/delete_teachers:latest"
@@ -110,7 +110,7 @@ jobs:
               ports:
                 - "8013:8013"
               env_file:
-                - .env
+                - ~/.env
 
             read_teachers:
               image: "\${DOCKER_USERNAME}/read_teachers:latest"
@@ -119,7 +119,7 @@ jobs:
               ports:
                 - "8011:8011"
               env_file:
-                - .env
+                - ~/.env
 
             update_teachers:
               image: "\${DOCKER_USERNAME}/update_teachers:latest"
@@ -128,11 +128,11 @@ jobs:
               ports:
                 - "8012:8012"
               env_file:
-                - .env
+                - ~/.env
           EOF
 
-          echo "🚀 Deploying containers with Docker Compose..."
+          echo "🚀 Desplegando servicios con Docker Compose..."
           sudo docker-compose up -d
 
-          echo "🔍 Verifying running containers..."
+          echo "🔍 Verificando contenedores en ejecución..."
           sudo docker ps
