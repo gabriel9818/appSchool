@@ -52,15 +52,21 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY_TEACHER }}
         port: 22
         script: |
-          echo "🔄 Exporting environment variables..."
-          cat <<EOF > ~/appSchool/BACKEND/teacher_management/.env
-          DB_HOST_TEACHER=${{ secrets.DB_HOST_TEACHER }}
-          DB_PORT_TEACHER=${{ secrets.DB_PORT_TEACHER }}
-          DB_USER_TEACHER=${{ secrets.DB_USER_TEACHER }}
-          DB_PASSWORD_TEACHER=${{ secrets.DB_PASSWORD_TEACHER }}
-          DB_NAME_TEACHER=${{ secrets.DB_NAME_TEACHER }}
-          DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
-          EOF
+          echo "🔍 Debug: Verificando conexión a EC2"
+          ssh -vvv ubuntu@${{ secrets.EC2_HOST_TEACHER_MANAGEMENT }} "echo 'Conexión exitosa'"
+          echo "🔄 Exportando variables de entorno..."
+          echo "export DB_HOST_TEACHER=${{ secrets.DB_HOST_TEACHER }}" >> ~/.bashrc
+          echo "export DB_USER_TEACHER=${{ secrets.DB_USER_TEACHER }}" >> ~/.bashrc
+          echo "export DB_PASSWORD_TEACHER=${{ secrets.DB_PASSWORD_TEACHER }}" >> ~/.bashrc
+          echo "export DB_NAME_TEACHER=${{ secrets.DB_NAME_TEACHER }}" >> ~/.bashrc
+          echo "export DB_PORT_TEACHER=${{ secrets.DB_PORT_TEACHER }}" >> ~/.bashrc
+          echo "export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> ~/.bashrc
+          source ~/.bashrc
+                 
+
+          echo "📌 Verificando variables exportadas..."
+          env | grep -E 'DB_HOST_TEACHER|DB_PORT_TEACHER|DB_USER_TEACHER|DB_PASSWORD_TEACHER|DB_NAME_TEACHER|DOCKER_USERNAME'
+
 
           echo "📦 Moving to the project directory..."
           cd ~/appSchool/BACKEND/teacher_management || mkdir -p ~/appSchool/BACKEND/teacher_management && cd ~/appSchool/BACKEND/teacher_management
