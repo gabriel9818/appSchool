@@ -18,9 +18,9 @@ jobs:
     - name: 🔑 Acceder al servidor EC2 y desplegar
       uses: appleboy/ssh-action@v0.1.8
       with:
-        host: ${{ secrets.AWS_HOST_SCHEDULES }}
+        host: ${{ secrets.EC2_HOST_SCHEDULES }}
         username: ec2-user
-        key: ${{ secrets.AWS_SSH_KEY_SCHEDULES }}
+        key: ${{ secrets.EC2_SSH_KEY_SCHEDULES }}
         port: 22
         script: |
           echo "✅ Conexión establecida con EC2"
@@ -30,9 +30,11 @@ jobs:
             echo "🔧 Instalando Docker..."
             sudo yum update -y
             sudo yum install -y docker
+
+            echo "🔧 Iniciando Docker y añadiendo permisos..."
             sudo systemctl start docker
             sudo usermod -aG docker ec2-user
-            newgrp docker
+            newgrp docker  # Aplicar cambios sin reiniciar sesión
           fi
 
           if ! command -v docker-compose &> /dev/null; then
@@ -42,17 +44,17 @@ jobs:
           fi
 
           echo "🔑 Iniciando sesión en Docker Hub..."
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
           echo "🛑 Eliminando contenedores e imágenes en conflicto..."
-          docker stop $(docker ps -aq) || true
-          docker rm $(docker ps -aq) || true
-          docker rmi -f gabrielrv/created_schedules:latest || true
-          docker rmi -f gabrielrv/delete_schedules:latest || true
-          docker rmi -f gabrielrv/read_schedules:latest || true
-          docker rmi -f gabrielrv/update_schedules:latest || true
-          docker network prune -f || true
-          docker volume prune -f || true
+          sudo docker stop $(sudo docker ps -aq) || true
+          sudo docker rm $(sudo docker ps -aq) || true
+          sudo docker rmi -f gabrielrv/created_schedules:latest || true
+          sudo docker rmi -f gabrielrv/delete_schedules:latest || true
+          sudo docker rmi -f gabrielrv/read_schedules:latest || true
+          sudo docker rmi -f gabrielrv/update_schedules:latest || true
+          sudo docker network prune -f || true
+          sudo docker volume prune -f || true
 
           echo "📦 Moviéndonos al directorio del proyecto..."
           cd /home/ec2-user/appSchool/BACKEND/schedules_management || mkdir -p /home/ec2-user/appSchool/BACKEND/schedules_management && cd /home/ec2-user/appSchool/BACKEND/schedules_management
@@ -108,13 +110,13 @@ jobs:
           EOF
 
           echo "📥 Descargando imágenes de Docker..."
-          docker pull gabrielrv/created_schedules:latest
-          docker pull gabrielrv/delete_schedules:latest
-          docker pull gabrielrv/read_schedules:latest
-          docker pull gabrielrv/update_schedules:latest
+          sudo docker pull gabrielrv/created_schedules:latest
+          sudo docker pull gabrielrv/delete_schedules:latest
+          sudo docker pull gabrielrv/read_schedules:latest
+          sudo docker pull gabrielrv/update_schedules:latest
 
           echo "🚀 Desplegando servicios con Docker Compose..."
-          docker-compose up -d --force-recreate --remove-orphans
+          sudo docker-compose up -d --force-recreate --remove-orphans
 
           echo "🔍 Verificando contenedores en ejecución..."
-          docker ps
+          sudo docker ps
