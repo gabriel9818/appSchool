@@ -58,17 +58,16 @@ jobs:
           mkdir -p /home/ec2-user/appSchool/BACKEND/schedules_management
           cd /home/ec2-user/appSchool/BACKEND/schedules_management
 
-          echo "📂 Creando archivo .env..."
-          echo "DB_HOST=${{ secrets.DB_HOST_SCHEDULES }}" > .env
-          echo "DB_PORT=${{ secrets.DB_PORT_SCHEDULES }}" >> .env
-          echo "DB_USER=${{ secrets.DB_USER_SCHEDULES }}" >> .env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD_SCHEDULES }}" >> .env
-          echo "DB_NAME=${{ secrets.DB_NAME_SCHEDULES }}" >> .env
+          echo "📂 Configurando variables de entorno..."
+          export DB_HOST="${{ secrets.DB_HOST_SCHEDULES }}"
+          export DB_PORT="${{ secrets.DB_PORT_SCHEDULES }}"
+          export DB_USER="${{ secrets.DB_USER_SCHEDULES }}"
+          export DB_PASSWORD="${{ secrets.DB_PASSWORD_SCHEDULES }}"
+          export DB_NAME="${{ secrets.DB_NAME_SCHEDULES }}"
 
           echo "⬇️ Creando nuevo docker-compose.yml..."
-          cat > docker-compose.yml <<EOF
+          cat <<EOF > docker-compose.yml
           version: '3.8'
-
           services:
             created_schedules:
               image: gabrielrv/created_schedules:latest
@@ -76,8 +75,12 @@ jobs:
               restart: always
               ports:
                 - "6000:6000"
-              env_file:
-                - .env
+              environment:
+                DB_HOST: "\$DB_HOST"
+                DB_PORT: "\$DB_PORT"
+                DB_USER: "\$DB_USER"
+                DB_PASSWORD: "\$DB_PASSWORD"
+                DB_NAME: "\$DB_NAME"
 
             delete_schedules:
               image: gabrielrv/delete_schedules:latest
@@ -85,8 +88,12 @@ jobs:
               restart: always
               ports:
                 - "6002:6002"
-              env_file:
-                - .env
+              environment:
+                DB_HOST: "\$DB_HOST"
+                DB_PORT: "\$DB_PORT"
+                DB_USER: "\$DB_USER"
+                DB_PASSWORD: "\$DB_PASSWORD"
+                DB_NAME: "\$DB_NAME"
 
             read_schedules:
               image: gabrielrv/read_schedules:latest
@@ -94,8 +101,12 @@ jobs:
               restart: always
               ports:
                 - "6001:6001"
-              env_file:
-                - .env
+              environment:
+                DB_HOST: "\$DB_HOST"
+                DB_PORT: "\$DB_PORT"
+                DB_USER: "\$DB_USER"
+                DB_PASSWORD: "\$DB_PASSWORD"
+                DB_NAME: "\$DB_NAME"
 
             update_schedules:
               image: gabrielrv/update_schedules:latest
@@ -103,8 +114,12 @@ jobs:
               restart: always
               ports:
                 - "6003:6003"
-              env_file:
-                - .env
+              environment:
+                DB_HOST: "\$DB_HOST"
+                DB_PORT: "\$DB_PORT"
+                DB_USER: "\$DB_USER"
+                DB_PASSWORD: "\$DB_PASSWORD"
+                DB_NAME: "\$DB_NAME"
           EOF
 
           echo "📥 Descargando imágenes de Docker..."
