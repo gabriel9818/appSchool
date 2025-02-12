@@ -2,67 +2,53 @@ version: '3.8'
 
 services:
   created_teachers:
-    image: "${DOCKER_USERNAME}/created_teachers:latest"
+    image: $DOCKER_USERNAME/created_teachers:latest
     container_name: created_teachers
     restart: always
     ports:
       - "8010:8010"
     environment:
-      DB_HOST: "${DB_HOST}"
-      DB_PORT: "${DB_PORT}"
-      DB_USER: "${DB_USER}"
-      DB_PASSWORD: "${DB_PASSWORD}"
-      DB_NAME: "${DB_NAME}"
-    volumes:
-      - created_teachers_data:/app/data
+      DB_HOST: $DB_HOST_TEACHER
+      DB_PORT: $DB_PORT_TEACHER
+      DB_USER: $DB_USER_TEACHER
+      DB_PASSWORD: $DB_PASSWORD_TEACHER
+      DB_NAME: $DB_NAME_TEACHER
 
   delete_teachers:
-    image: "${DOCKER_USERNAME}/delete_teachers:latest"
+    image: $DOCKER_USERNAME/delete_teachers:latest
     container_name: delete_teachers
     restart: always
     ports:
       - "8013:8013"
     environment:
-      DB_HOST: "${DB_HOST}"
-      DB_PORT: "${DB_PORT}"
-      DB_USER: "${DB_USER}"
-      DB_PASSWORD: "${DB_PASSWORD}"
-      DB_NAME: "${DB_NAME}"
-    volumes:
-      - delete_teachers_data:/app/data
+      DB_HOST: $DB_HOST_TEACHER
+      DB_PORT: $DB_PORT_TEACHER
+      DB_USER: $DB_USER_TEACHER
+      DB_PASSWORD: $DB_PASSWORD_TEACHER
+      DB_NAME: $DB_NAME_TEACHER
 
   read_teachers:
-    image: "${DOCKER_USERNAME}/read_teachers:latest"
+    image: $DOCKER_USERNAME/read_teachers:latest
     container_name: read_teachers
     restart: always
     ports:
       - "8011:8011"
     environment:
-      DB_HOST: "${DB_HOST}"
-      DB_PORT: "${DB_PORT}"
-      DB_USER: "${DB_USER}"
-      DB_PASSWORD: "${DB_PASSWORD}"
-      DB_NAME: "${DB_NAME}"
-    volumes:
-      - read_teachers_data:/app/data
+      DB_HOST: $DB_HOST_TEACHER
+      DB_PORT: $DB_PORT_TEACHER
+      DB_USER: $DB_USER_TEACHER
+      DB_PASSWORD: $DB_PASSWORD_TEACHER
+      DB_NAME: $DB_NAME_TEACHER
 
   update_teachers:
-    image: "${DOCKER_USERNAME}/update_teachers:latest"
+    image: $DOCKER_USERNAME/update_teachers:latest
     container_name: update_teachers
     restart: always
     ports:
       - "8012:8012"
     environment:
-      DB_HOST: "${DB_HOST}"
-      DB_PORT: "${DB_PORT}"
-      DB_USER: "${DB_USER}"
-      DB_PASSWORD: "${DB_PASSWORD}"
-      DB_NAME: "${DB_NAME}"
-    volumes:
-      - update_teachers_data:/app/data
-
-volumes:
-  created_teachers_data:
-  delete_teachers_data:
-  read_teachers_data:
-  update_teachers_data:
+      DB_HOST: $DB_HOST_TEACHER
+      DB_PORT: $DB_PORT_TEACHER
+      DB_USER: $DB_USER_TEACHER
+      DB_PASSWORD: $DB_PASSWORD_TEACHER
+      DB_NAME: $DB_NAME_TEACHER
