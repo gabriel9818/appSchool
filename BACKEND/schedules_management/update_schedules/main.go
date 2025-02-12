@@ -8,7 +8,7 @@ import (
 	"update_schedules/db"
 	"update_schedules/routes"
 
-	"github.com/joho/godotenv" // Importar godotenv para cargar .env
+	"github.com/joho/godotenv" // Importar godotenv para cargar
 )
 
 func main() {
