@@ -15,7 +15,7 @@ jobs:
     - name: 🚀 Checkout del código
       uses: actions/checkout@v3
 
-    - name: 🔑 Acceder al servidor EC2 y desplegar
+    - name: 🔑 Acceder al servidor EC2 y desplegar en Amazon Linux
       uses: appleboy/ssh-action@v0.1.8
       with:
         host: ${{ secrets.EC2_HOST_SCHEDULES }}
@@ -25,32 +25,36 @@ jobs:
         script: |
           echo "✅ Conexión establecida con EC2"
 
-          echo "🛠️ Instalando Docker y Docker Compose en Amazon Linux..."
-          sudo yum update -y
-          sudo yum install -y docker
-          sudo systemctl start docker
-          sudo systemctl enable docker
-          sudo usermod -aG docker ec2-user
-          newgrp docker || true
-          
-          echo "⬇️ Instalando Docker Compose..."
-          sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
+          echo "🛠️ Verificando si Docker y Docker Compose están instalados..."
+          if ! command -v docker &> /dev/null; then
+            echo "🔧 Instalando Docker..."
+            sudo yum update -y
+            sudo yum install -y docker
+            sudo systemctl start docker
+            sudo usermod -aG docker ec2-user
+            newgrp docker || true
+          fi
+
+          if ! command -v docker-compose &> /dev/null; then
+            echo "🔧 Instalando Docker Compose..."
+            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+          fi
 
           echo "🔑 Iniciando sesión en Docker Hub..."
-          echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
           echo "🛑 Eliminando contenedores e imágenes en conflicto..."
-          sudo docker stop $(sudo docker ps -aq) || true
-          sudo docker rm $(sudo docker ps -aq) || true
-          sudo docker rmi -f gabrielrv/created_schedules:latest || true
-          sudo docker rmi -f gabrielrv/delete_schedules:latest || true
-          sudo docker rmi -f gabrielrv/read_schedules:latest || true
-          sudo docker rmi -f gabrielrv/update_schedules:latest || true
-          sudo docker network prune -f || true
-          sudo docker volume prune -f || true
+          docker stop $(docker ps -aq) || true
+          docker rm $(docker ps -aq) || true
+          docker rmi -f gabrielrv/created_schedules:latest || true
+          docker rmi -f gabrielrv/delete_schedules:latest || true
+          docker rmi -f gabrielrv/read_schedules:latest || true
+          docker rmi -f gabrielrv/update_schedules:latest || true
+          docker network prune -f || true
+          docker volume prune -f || true
 
-          echo "📦 Moviéndonos al directorio del proyecto..."
+          echo "📦 Creando directorio del proyecto..."
           mkdir -p /home/ec2-user/appSchool/BACKEND/schedules_management
           cd /home/ec2-user/appSchool/BACKEND/schedules_management
 
@@ -105,13 +109,13 @@ jobs:
           EOF
 
           echo "📥 Descargando imágenes de Docker..."
-          sudo docker pull gabrielrv/created_schedules:latest
-          sudo docker pull gabrielrv/delete_schedules:latest
-          sudo docker pull gabrielrv/read_schedules:latest
-          sudo docker pull gabrielrv/update_schedules:latest
+          docker pull gabrielrv/created_schedules:latest
+          docker pull gabrielrv/delete_schedules:latest
+          docker pull gabrielrv/read_schedules:latest
+          docker pull gabrielrv/update_schedules:latest
 
           echo "🚀 Desplegando servicios con Docker Compose..."
-          sudo docker-compose up -d --force-recreate --remove-orphans
+          docker-compose up -d --force-recreate --remove-orphans
 
           echo "🔍 Verificando contenedores en ejecución..."
-          sudo docker ps
+          docker ps
