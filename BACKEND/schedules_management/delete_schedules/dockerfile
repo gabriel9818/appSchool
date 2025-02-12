@@ -1,20 +1,33 @@
-# Imagen base de Go
-FROM golang:1.20
+# Usar la imagen oficial de Golang como base
+FROM golang:1.20 AS builder
 
-# Crear directorio de trabajo
+# Establecer directorio de trabajo en el contenedor
 WORKDIR /app
 
-# Copiar archivos necesarios
+# Copiar los archivos de módulos y descargar dependencias
 COPY go.mod go.sum ./
 RUN go mod download
 
+# Copiar el código fuente
 COPY . .
 
-# Construir el ejecutable
+# Compilar la aplicación
 RUN go build -o main .
 
-# Exponer el puerto
+# Crear una imagen final ligera con solo el binario
+FROM amazonlinux:latest
+
+# Instalar dependencias mínimas
+RUN yum install -y shadow-utils && yum clean all
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Copiar el binario desde la imagen de compilación
+COPY --from=builder /app/main .
+
+# Exponer el puerto de la aplicación
 EXPOSE 6002
 
-# Ejecutar la aplicación
+# Comando para ejecutar la aplicación
 CMD ["./main"]
