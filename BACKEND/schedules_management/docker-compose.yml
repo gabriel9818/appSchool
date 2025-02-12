@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  created_schedules:
+    image: gabrielrv/created_schedules:latest
+    container_name: created_schedules
+    restart: always
+    ports:
+      - "6000:6000"
+    environment:
+      DB_HOST: "${DB_HOST}"
+      DB_PORT: "${DB_PORT}"
+      DB_USER: "${DB_USER}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      DB_NAME: "${DB_NAME}"
+
+  delete_schedules:
+    image: gabrielrv/delete_schedules:latest
+    container_name: delete_schedules
+    restart: always
+    ports:
+      - "6002:6002"
+    environment:
+      DB_HOST: "${DB_HOST}"
+      DB_PORT: "${DB_PORT}"
+      DB_USER: "${DB_USER}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      DB_NAME: "${DB_NAME}"
+
+  read_schedules:
+    image: gabrielrv/read_schedules:latest
+    container_name: read_schedules
+    restart: always
+    ports:
+      - "6001:6001"
+    environment:
+      DB_HOST: "${DB_HOST}"
+      DB_PORT: "${DB_PORT}"
+      DB_USER: "${DB_USER}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      DB_NAME: "${DB_NAME}"
+
+  update_schedules:
+    image: gabrielrv/update_schedules:latest
+    container_name: update_schedules
+    restart: always
+    ports:
+      - "6003:6003"
+    environment:
+      DB_HOST: "${DB_HOST}"
+      DB_PORT: "${DB_PORT}"
+      DB_USER: "${DB_USER}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      DB_NAME: "${DB_NAME}"
