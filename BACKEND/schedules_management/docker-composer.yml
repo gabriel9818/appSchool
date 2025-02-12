@@ -1,54 +1,38 @@
 version: '3.8'
 
 services:
-  created_schedules:
-    image: $DOCKER_USERNAME/created_schedules:latest
-    container_name: created_schedules
+  created_teachers:
+    image: "${DOCKER_USERNAME}/created_teachers:latest"
+    container_name: created_teachers
     restart: always
     ports:
-      - "6000:6000"
-    environment:
-      DB_HOST: $DB_HOST
-      DB_PORT: $DB_PORT
-      DB_USER: $DB_USER
-      DB_PASSWORD: $DB_PASSWORD
-      DB_NAME: $DB_NAME
+      - "8010:8010"
+    env_file:
+      - .env
 
-  delete_schedules:
-    image: $DOCKER_USERNAME/delete_schedules:latest
-    container_name: delete_schedules
+  delete_teachers:
+    image: "${DOCKER_USERNAME}/delete_teachers:latest"
+    container_name: delete_teachers
     restart: always
     ports:
-      - "6002:6002"
-    environment:
-      DB_HOST: $DB_HOST
-      DB_PORT: $DB_PORT
-      DB_USER: $DB_USER
-      DB_PASSWORD: $DB_PASSWORD
-      DB_NAME: $DB_NAME
+      - "8013:8013"
+    env_file:
+      - .env
 
-  read_schedules:
-    image: $DOCKER_USERNAME/read_schedules:latest
-    container_name: read_schedules
+  read_teachers:
+    image: "${DOCKER_USERNAME}/read_teachers:latest"
+    container_name: read_teachers
     restart: always
     ports:
-      - "6001:6001"
-    environment:
-      DB_HOST: $DB_HOST
-      DB_PORT: $DB_PORT
-      DB_USER: $DB_USER
-      DB_PASSWORD: $DB_PASSWORD
-      DB_NAME: $DB_NAME
+      - "8011:8011"
+    env_file:
+      - .env
 
-  update_schedules:
-    image: $DOCKER_USERNAME/update_schedules:latest
-    container_name: update_schedules
+  update_teachers:
+    image: "${DOCKER_USERNAME}/update_teachers:latest"
+    container_name: update_teachers
     restart: always
     ports:
-      - "6003:6003"
-    environment:
-      DB_HOST: $DB_HOST
-      DB_PORT: $DB_PORT
-      DB_USER: $DB_USER
-      DB_PASSWORD: $DB_PASSWORD
-      DB_NAME: $DB_NAME
+      - "8012:8012"
+    env_file:
+      - .env
