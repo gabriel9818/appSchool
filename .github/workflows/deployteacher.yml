@@ -1,4 +1,4 @@
-name: CI/CD for Teacher Management
+name: Deploy Teacher Management Services to AWS
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
     - name: 🚀 Checkout del código
       uses: actions/checkout@v3
 
-    - name: 🔑 Acceder al servidor EC2
+    - name: 🔑 Acceder al servidor EC2 y desplegar
       uses: appleboy/ssh-action@v0.1.8
       with:
         host: ${{ secrets.EC2_HOST_TEACHER }}
@@ -34,7 +34,10 @@ jobs:
             sudo usermod -aG docker ubuntu
           fi
 
-          echo "🛑 Eliminando contenedores en conflicto..."
+          echo "🔑 Iniciando sesión en Docker Hub..."
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+          echo "🛑 Eliminando contenedores e imágenes en conflicto..."
           docker stop $(docker ps -aq) || true
           docker rm $(docker ps -aq) || true
           docker rmi -f gabrielrv/created_teachers:latest || true
@@ -47,10 +50,18 @@ jobs:
           echo "📦 Moviéndonos al directorio del proyecto..."
           cd ~/appSchool/BACKEND/teacher_management || mkdir -p ~/appSchool/BACKEND/teacher_management && cd ~/appSchool/BACKEND/teacher_management
 
+          echo "📂 Creando archivo .env..."
+          cat <<EOF > .env
+          DB_HOST=${{ secrets.DB_HOST_TEACHER }}
+          DB_PORT=${{ secrets.DB_PORT_TEACHER }}
+          DB_USER=${{ secrets.DB_USER_TEACHER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD_TEACHER }}
+          DB_NAME=${{ secrets.DB_NAME_TEACHER }}
+          EOF
+
           echo "⬇️ Creando nuevo docker-compose.yml..."
           cat <<EOF > docker-compose.yml
           version: '3.8'
-
           services:
             created_teachers:
               image: gabrielrv/created_teachers:latest
