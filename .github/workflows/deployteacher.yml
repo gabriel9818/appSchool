@@ -82,7 +82,7 @@ jobs:
           fi
 
           echo "🛑 Stopping existing containers..."
-          sudo docker compose down
+          sudo docker-compose down
 
           echo "⬇️ Updating docker-compose.yml..."
           cat <<EOF > docker-compose.yml
