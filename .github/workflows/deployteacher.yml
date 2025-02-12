@@ -3,7 +3,7 @@ name: Deploy Teacher Management Services
 on:
   push:
     branches:
-      - test
+      - main
     paths:
       - 'BACKEND/teacher_management/**'
 
@@ -52,21 +52,8 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY_TEACHER }}
         port: 22
         script: |
-          echo "🔍 Verificando conexión SSH..."
+          echo "🔍 Verificando acceso SSH..."
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST_TEACHER_MANAGEMENT }} "echo '✅ Conexión SSH exitosa'"
-
-          echo "🔄 Exportando variables de entorno..."
-          cat <<EOF > ~/.env
-          DB_HOST_TEACHER=${{ secrets.DB_HOST_TEACHER }}
-          DB_USER_TEACHER=${{ secrets.DB_USER_TEACHER }}
-          DB_PASSWORD_TEACHER=${{ secrets.DB_PASSWORD_TEACHER }}
-          DB_NAME_TEACHER=${{ secrets.DB_NAME_TEACHER }}
-          DB_PORT_TEACHER=${{ secrets.DB_PORT_TEACHER }}
-          DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
-          EOF
-          
-          echo "📌 Cargando variables en el entorno..."
-          export $(cat ~/.env | xargs)
 
           echo "📦 Moviéndonos al directorio del proyecto..."
           cd ~/appSchool/BACKEND/teacher_management || mkdir -p ~/appSchool/BACKEND/teacher_management && cd ~/appSchool/BACKEND/teacher_management
@@ -89,6 +76,41 @@ jobs:
           echo "🛑 Deteniendo contenedores existentes..."
           sudo docker-compose down || true
 
+          echo "⬇️ Creando archivos .env para cada microservicio..."
+          mkdir -p ~/appSchool/BACKEND/teacher_management
+
+          cat <<EOF > ~/appSchool/BACKEND/teacher_management/created_teachers/.env
+          DB_HOST=${{ secrets.DB_HOST_TEACHER }}
+          DB_PORT=${{ secrets.DB_PORT_TEACHER }}
+          DB_USER=${{ secrets.DB_USER_TEACHER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD_TEACHER }}
+          DB_NAME=${{ secrets.DB_NAME_TEACHER }}
+          EOF
+
+          cat <<EOF > ~/appSchool/BACKEND/teacher_management/delete_teachers/.env
+          DB_HOST=${{ secrets.DB_HOST_TEACHER }}
+          DB_PORT=${{ secrets.DB_PORT_TEACHER }}
+          DB_USER=${{ secrets.DB_USER_TEACHER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD_TEACHER }}
+          DB_NAME=${{ secrets.DB_NAME_TEACHER }}
+          EOF
+
+          cat <<EOF > ~/appSchool/BACKEND/teacher_management/read_teachers/.env
+          DB_HOST=${{ secrets.DB_HOST_TEACHER }}
+          DB_PORT=${{ secrets.DB_PORT_TEACHER }}
+          DB_USER=${{ secrets.DB_USER_TEACHER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD_TEACHER }}
+          DB_NAME=${{ secrets.DB_NAME_TEACHER }}
+          EOF
+
+          cat <<EOF > ~/appSchool/BACKEND/teacher_management/update_teachers/.env
+          DB_HOST=${{ secrets.DB_HOST_TEACHER }}
+          DB_PORT=${{ secrets.DB_PORT_TEACHER }}
+          DB_USER=${{ secrets.DB_USER_TEACHER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD_TEACHER }}
+          DB_NAME=${{ secrets.DB_NAME_TEACHER }}
+          EOF
+
           echo "⬇️ Creando archivo docker-compose.yml..."
           cat <<EOF > docker-compose.yml
           version: '3.8'
@@ -101,7 +123,7 @@ jobs:
               ports:
                 - "8010:8010"
               env_file:
-                - ~/.env
+                - ./created_teachers/.env
 
             delete_teachers:
               image: "\${DOCKER_USERNAME}/delete_teachers:latest"
@@ -110,7 +132,7 @@ jobs:
               ports:
                 - "8013:8013"
               env_file:
-                - ~/.env
+                - ./delete_teachers/.env
 
             read_teachers:
               image: "\${DOCKER_USERNAME}/read_teachers:latest"
@@ -119,7 +141,7 @@ jobs:
               ports:
                 - "8011:8011"
               env_file:
-                - ~/.env
+                - ./read_teachers/.env
 
             update_teachers:
               image: "\${DOCKER_USERNAME}/update_teachers:latest"
@@ -128,7 +150,7 @@ jobs:
               ports:
                 - "8012:8012"
               env_file:
-                - ~/.env
+                - ./update_teachers/.env
           EOF
 
           echo "🚀 Desplegando servicios con Docker Compose..."
