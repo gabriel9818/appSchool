@@ -8,52 +8,92 @@ on:
       - 'BACKEND/teacher_management/**'
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout Repository
+    - name: 🚀 Checkout del código
       uses: actions/checkout@v3
 
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-
-    - name: Build and Push Docker Images
-      run: |
-        for service in created_teachers delete_teachers read_teachers update_teachers; do
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/$service:latest BACKEND/teacher_management/$service/.
-          docker push ${{ secrets.DOCKER_USERNAME }}/$service:latest
-        done
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - name: Deploy to AWS EC2
+    - name: 🔑 Acceder al servidor EC2
       uses: appleboy/ssh-action@v0.1.8
       with:
-        host: ${{ secrets.EC2_HOST_TEACHER_MANAGEMENT }}
+        host: ${{ secrets.EC2_HOST }}
         username: ubuntu
-        key: ${{ secrets.EC2_SSH_KEY_TEACHER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
         script: |
-          echo "🔄 Exportando variables de entorno..."
-          echo "export DB_HOST_TEACHER=${{ secrets.DB_HOST_TEACHER }}" >> ~/.bashrc
-          echo "export DB_PORT_TEACHER=${{ secrets.DB_PORT_TEACHER }}" >> ~/.bashrc
-          echo "export DB_USER_TEACHER=${{ secrets.DB_USER_TEACHER }}" >> ~/.bashrc
-          echo "export DB_PASSWORD_TEACHER=${{ secrets.DB_PASSWORD_TEACHER }}" >> ~/.bashrc
-          echo "export DB_NAME_TEACHER=${{ secrets.DB_NAME_TEACHER }}" >> ~/.bashrc
-          source ~/.bashrc
+          echo "✅ Conexión establecida con EC2"
+
+          echo "🔄 Eliminando contenedores en conflicto..."
+          docker stop $(docker ps -aq) || true
+          docker rm $(docker ps -aq) || true
+          docker rmi -f gabrielrv/created_teachers:latest || true
+          docker rmi -f gabrielrv/delete_teachers:latest || true
+          docker rmi -f gabrielrv/read_teachers:latest || true
+          docker rmi -f gabrielrv/update_teachers:latest || true
+          docker network prune -f || true
+          docker volume prune -f || true
 
           echo "📦 Moviéndonos al directorio del proyecto..."
           cd ~/appSchool/BACKEND/teacher_management || mkdir -p ~/appSchool/BACKEND/teacher_management && cd ~/appSchool/BACKEND/teacher_management
 
-          echo "🛑 Deteniendo contenedores existentes..."
-          sudo docker compose down || sudo docker-compose down
+          echo "🛠️ Verificando si Docker está instalado..."
+          if ! command -v docker &> /dev/null; then
+            echo "🔧 Instalando Docker..."
+            sudo apt update -y
+            sudo apt install -y docker.io
+            sudo systemctl start docker
+            sudo usermod -aG docker ubuntu
+          fi
+
+          echo "🛑 Eliminando contenedores existentes..."
+          sudo docker compose down || sudo docker-compose down || true
+
+          echo "⬇️ Creando nuevo docker-compose.yml..."
+          cat <<EOF > docker-compose.yml
+          version: '3.8'
+
+          services:
+            created_teachers:
+              image: gabrielrv/created_teachers:latest
+              container_name: created_teachers
+              restart: always
+              ports:
+                - "8010:8010"
+              env_file:
+                - .env
+
+            delete_teachers:
+              image: gabrielrv/delete_teachers:latest
+              container_name: delete_teachers
+              restart: always
+              ports:
+                - "8013:8013"
+              env_file:
+                - .env
+
+            read_teachers:
+              image: gabrielrv/read_teachers:latest
+              container_name: read_teachers
+              restart: always
+              ports:
+                - "8011:8011"
+              env_file:
+                - .env
+
+            update_teachers:
+              image: gabrielrv/update_teachers:latest
+              container_name: update_teachers
+              restart: always
+              ports:
+                - "8012:8012"
+              env_file:
+                - .env
+          EOF
 
           echo "🚀 Desplegando servicios con Docker Compose..."
-          sudo docker compose up -d || sudo docker-compose up -d
+          sudo docker compose up -d --force-recreate --remove-orphans || sudo docker-compose up -d --force-recreate --remove-orphans
 
           echo "🔍 Verificando contenedores en ejecución..."
           sudo docker ps
