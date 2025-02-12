@@ -66,6 +66,9 @@ jobs:
           echo "export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> ~/.bashrc
           source ~/.bashrc
 
+          echo "📌 Verificando variables exportadas..."
+          env | grep -E 'DB_HOST_TEACHER|DB_PORT_TEACHER|DB_USER_TEACHER|DB_PASSWORD_TEACHER|DB_NAME_TEACHER|DOCKER_USERNAME'
+
           echo "📦 Moving to the project directory..."
           cd ~/appSchool/BACKEND/teacher_management || mkdir -p ~/appSchool/BACKEND/teacher_management && cd ~/appSchool/BACKEND/teacher_management
 
