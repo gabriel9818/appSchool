@@ -10,7 +10,7 @@ def update_teacher_by_id(db: Session, teacher_id: int, name: str = None, email: 
 
     print(f"🔄 Original Data: {teacher.name}, {teacher.email}, {teacher.subject}")
 
-    # Actualizar solo los campos proporcionados
+    # Actualizar solo los campos proporcionados a
     if name:
         teacher.name = name
     if email:
