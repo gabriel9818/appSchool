@@ -1,4 +1,4 @@
-name: Docker Image CI/CD for Teacher Management Services
+name: Docker CI/CD with Docker Compose for Teacher Management Services
 
 on:
   push:
@@ -19,21 +19,30 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    - name: Debug repository structure
+      run: |
+        echo "📂 Listing files..."
+        ls -R $GITHUB_WORKSPACE
+
     - name: Log in to Docker Hub
       uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Build and Push Docker images
+    - name: Build and Push Docker Images
       run: |
-        services=("created_teachers" "delete_teachers" "read_teachers" "update_teachers")
-        for service in "${services[@]}"; do
-          docker build $GITHUB_WORKSPACE/BACKEND/teacher_management/$service/. \
-            --file $GITHUB_WORKSPACE/BACKEND/teacher_management/$service/Dockerfile \
-            -t ${{ secrets.DOCKER_USERNAME }}/$service:latest
-          docker push ${{ secrets.DOCKER_USERNAME }}/$service:latest
-        done
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/created_teachers:latest $GITHUB_WORKSPACE/BACKEND/teacher_management/created_teachers/.
+        docker push ${{ secrets.DOCKER_USERNAME }}/created_teachers:latest
+        
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/delete_teachers:latest $GITHUB_WORKSPACE/BACKEND/teacher_management/delete_teachers/.
+        docker push ${{ secrets.DOCKER_USERNAME }}/delete_teachers:latest
+
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/read_teachers:latest $GITHUB_WORKSPACE/BACKEND/teacher_management/read_teachers/.
+        docker push ${{ secrets.DOCKER_USERNAME }}/read_teachers:latest
+
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/update_teachers:latest $GITHUB_WORKSPACE/BACKEND/teacher_management/update_teachers/.
+        docker push ${{ secrets.DOCKER_USERNAME }}/update_teachers:latest
 
   deploy:
     needs: build
@@ -48,47 +57,96 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY_TEACHER }}
         port: 22
         script: |
-          echo "🔄 Exportando variables de entorno..."
-          echo "export DB_HOST=${{ secrets.DB_HOST_TEACHER }}" >> ~/.bashrc
-          echo "export DB_USER=${{ secrets.DB_USER_TEACHER }}" >> ~/.bashrc
-          echo "export DB_PASSWORD=${{ secrets.DB_PASSWORD_TEACHER }}" >> ~/.bashrc
-          echo "export DB_NAME=${{ secrets.DB_NAME_TEACHER }}" >> ~/.bashrc
+          echo "🔄 Exporting environment variables..."
+          echo "export DB_HOST_TEACHER=${{ secrets.DB_HOST_TEACHER }}" >> ~/.bashrc
+          echo "export DB_USER_TEACHER=${{ secrets.DB_USER_TEACHER }}" >> ~/.bashrc
+          echo "export DB_PASSWORD_TEACHER=${{ secrets.DB_PASSWORD_TEACHER }}" >> ~/.bashrc
+          echo "export DB_NAME_TEACHER=${{ secrets.DB_NAME_TEACHER }}" >> ~/.bashrc
           echo "export DB_PORT_TEACHER=${{ secrets.DB_PORT_TEACHER }}" >> ~/.bashrc
+          echo "export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> ~/.bashrc
           source ~/.bashrc
 
-          echo "📦 Verificando carpeta del proyecto..."
-          if [ ! -d "/home/ubuntu/appSchool/BACKEND/teacher_management" ]; then
-            echo "⚠️ La carpeta no existe. Creándola..."
-            mkdir -p /home/ubuntu/appSchool/BACKEND/teacher_management
-          fi
-          cd /home/ubuntu/appSchool/BACKEND/teacher_management
+          echo "📦 Moving to the project directory..."
+          cd ~/appSchool/BACKEND/teacher_management || mkdir -p ~/appSchool/BACKEND/teacher_management && cd ~/appSchool/BACKEND/teacher_management
 
-          echo "🛠️ Instalando Docker y Docker Compose si es necesario..."
+          echo "🛠️ Checking if Docker is installed..."
           if ! command -v docker &> /dev/null; then
+            echo "🔧 Installing Docker..."
             sudo apt update -y
             sudo apt install -y docker.io
             sudo systemctl start docker
             sudo usermod -aG docker ubuntu
           fi
 
+          echo "🛠️ Checking if Docker Compose is installed..."
           if ! command -v docker-compose &> /dev/null; then
-            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-            sudo chmod +x /usr/local/bin/docker-compose
+            echo "🔧 Installing Docker Compose..."
+            sudo apt install -y docker-compose
           fi
 
-          echo "🛑 Deteniendo y eliminando contenedores existentes..."
+          echo "🛑 Stopping existing containers..."
           sudo docker-compose down || true
-          sudo docker rm -f $(sudo docker ps -aq) || true
-          sudo docker rmi -f $(sudo docker images -q) || true
 
-          echo "⬇️ Descargando imágenes actualizadas..."
-          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/created_teachers:latest
-          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/delete_teachers:latest
-          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/read_teachers:latest
-          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/update_teachers:latest
+          echo "⬇️ Updating docker-compose.yml..."
+          cat <<EOF > docker-compose.yml
+          version: '3.8'
 
-          echo "🚀 Desplegando contenedores con Docker Compose..."
+          services:
+            created_teachers:
+              image: \${DOCKER_USERNAME}/created_teachers:latest
+              container_name: created_teachers
+              restart: always
+              ports:
+                - "8010:8010"
+              environment:
+                DB_HOST: \${DB_HOST_TEACHER}
+                DB_PORT: \${DB_PORT_TEACHER}
+                DB_USER: \${DB_USER_TEACHER}
+                DB_PASSWORD: \${DB_PASSWORD_TEACHER}
+                DB_NAME: \${DB_NAME_TEACHER}
+
+            delete_teachers:
+              image: \${DOCKER_USERNAME}/delete_teachers:latest
+              container_name: delete_teachers
+              restart: always
+              ports:
+                - "8013:8013"
+              environment:
+                DB_HOST: \${DB_HOST_TEACHER}
+                DB_PORT: \${DB_PORT_TEACHER}
+                DB_USER: \${DB_USER_TEACHER}
+                DB_PASSWORD: \${DB_PASSWORD_TEACHER}
+                DB_NAME: \${DB_NAME_TEACHER}
+
+            read_teachers:
+              image: \${DOCKER_USERNAME}/read_teachers:latest
+              container_name: read_teachers
+              restart: always
+              ports:
+                - "8011:8011"
+              environment:
+                DB_HOST: \${DB_HOST_TEACHER}
+                DB_PORT: \${DB_PORT_TEACHER}
+                DB_USER: \${DB_USER_TEACHER}
+                DB_PASSWORD: \${DB_PASSWORD_TEACHER}
+                DB_NAME: \${DB_NAME_TEACHER}
+
+            update_teachers:
+              image: \${DOCKER_USERNAME}/update_teachers:latest
+              container_name: update_teachers
+              restart: always
+              ports:
+                - "8012:8012"
+              environment:
+                DB_HOST: \${DB_HOST_TEACHER}
+                DB_PORT: \${DB_PORT_TEACHER}
+                DB_USER: \${DB_USER_TEACHER}
+                DB_PASSWORD: \${DB_PASSWORD_TEACHER}
+                DB_NAME: \${DB_NAME_TEACHER}
+          EOF
+
+          echo "🚀 Deploying containers with Docker Compose..."
           sudo docker-compose up -d
 
-          echo "🔍 Verificando contenedores en ejecución..."
+          echo "🔍 Verifying running containers..."
           sudo docker ps
