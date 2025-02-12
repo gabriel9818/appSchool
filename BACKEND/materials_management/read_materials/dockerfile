@@ -1,23 +1,11 @@
-# Use an official Go runtime as a parent image
-FROM golang:1.20-alpine
+FROM golang:1.20
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy go module files and download dependencies
 COPY go.mod go.sum ./
-RUN go mod tidy
-
-# Copy the source code into the container
+RUN go mod download
 COPY . .
 
-# Build the Go application
-RUN go build -o main .
+RUN go build -o read_materials
 
-# Expose the port dynamically (defaulting to 8081)
-ARG APP_PORT=8081
-ENV APP_PORT=${APP_PORT}
-EXPOSE ${APP_PORT}
-
-# Command to run the application
-CMD ["sh", "-c", "./main"]
+CMD ["/app/read_materials"]

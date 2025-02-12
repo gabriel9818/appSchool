@@ -1,29 +1,40 @@
 package controllers
 
 import (
-	"delete_materials/models"
+	"encoding/json"
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
+	"delete_materials/db"
+
+	"github.com/gorilla/mux"
 )
 
-// DeleteMaterialHandler handles the request to delete a material
-func DeleteMaterialHandler(c *gin.Context) {
-	// Get the material ID from the URL parameter
-	idParam := c.Param("id")
-	id, err := strconv.Atoi(idParam)
+// DeleteMaterial removes a material from the database.
+//
+// @Summary Deletes a material
+// @Description Deletes a material from the database by its ID.
+// @Tags materials
+// @Param id path int true "Material ID"
+// @Success 200 {object} map[string]string "message: Material deleted successfully"
+// @Failure 400 {string} string "Invalid ID"
+// @Failure 500 {string} string "Internal error"
+// @Router /materials/{id} [delete]
+func DeleteMaterial(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	materialID, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid material ID"})
+		http.Error(w, "ID inválido", http.StatusBadRequest)
 		return
 	}
 
-	// Delete the material
-	err = models.DeleteMaterial(id)
+	query := "DELETE FROM materials WHERE id = ?"
+	_, err = db.DB.Exec(query, materialID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete material"})
+		http.Error(w, "Error deleting material", http.StatusInternalServerError)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Material deleted successfully"})
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"message": "Material removed successfully"})
 }

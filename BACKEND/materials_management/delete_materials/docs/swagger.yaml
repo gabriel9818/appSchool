@@ -1,0 +1,36 @@
+basePath: /
+host: localhost:8082
+info:
+  contact: {}
+  description: API to delete materials from the database.
+  title: Delete Materials API
+  version: "1.0"
+paths:
+  /materials/{id}:
+    delete:
+      description: Deletes a material from the database by its ID.
+      parameters:
+      - description: Material ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: 'message: Material deleted successfully'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid ID
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
+      summary: Deletes a material
+      tags:
+      - materials
+swagger: "2.0"

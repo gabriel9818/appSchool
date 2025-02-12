@@ -1,0 +1,84 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API for creating materials in the database.",
+        "title": "Created Materials API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8084",
+    "basePath": "/",
+    "paths": {
+        "/materials": {
+            "post": {
+                "description": "Adds a new material entry to the database.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "materials"
+                ],
+                "summary": "Create a new material",
+                "parameters": [
+                    {
+                        "description": "Material data",
+                        "name": "material",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Material"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "message: Material created successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.Material": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "subject": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

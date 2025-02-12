@@ -1,28 +1,50 @@
-from flask import Blueprint, request, jsonify
-from db import get_connection
+package main
 
-update_materials = Blueprint("update_materials", __name__)
+import (
+	"log"
+	"net/http"
+	"os"
 
-@update_materials.route("/api/update/<int:id>", methods=["PUT"])
-def update(id):
-    data = request.json
-    nombre = data.get("nombre")
-    descripcion = data.get("descripcion")
-    if not nombre or not descripcion:
-        return jsonify({"error": "Faltan campos requeridos"}), 400
-    try:
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            "UPDATE materiales SET nombre = %s, descripcion = %s WHERE id = %s",
-            (nombre, descripcion, id)
-        )
-        conn.commit()
-        if cursor.rowcount == 0:
-            return jsonify({"message": "Material no encontrado"}), 404
-        return jsonify({"message": "Material actualizado"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        cursor.close()
-        conn.close()
+	"update_materials/db"
+	"update_materials/routes"
+
+	_ "update_materials/docs"
+
+	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
+	httpSwagger "github.com/swaggo/http-swagger"
+)
+
+// @title Materials Management API
+// @version 1.0
+// @description API for managing materials (update, read, create and delete).
+// @host localhost:8082
+// @BasePath /
+
+func main() {
+	// charge  .env
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("❌ Error loading .env file")
+	}
+
+	// read port .env
+	port := os.Getenv("APP_PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	// init data base
+	db.Init()
+
+	r := mux.NewRouter()
+
+	//routes
+	routes.RegisterMaterialRoutes(r)
+
+	// Routes of Swagger
+	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
+
+	log.Println("✅ Server running on port " + port)
+	http.ListenAndServe(":"+port, r)
+}

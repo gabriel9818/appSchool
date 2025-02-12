@@ -1,0 +1,60 @@
+basePath: /
+definitions:
+  models.Material:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      subject:
+        type: string
+    type: object
+host: localhost:8082
+info:
+  contact: {}
+  description: API for managing materials (update, read, create and delete).
+  title: Materials Management API
+  version: "1.0"
+paths:
+  /materials/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Updates the data for a material in the database.
+      parameters:
+      - description: Material ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Data updated
+        in: body
+        name: material
+        required: true
+        schema:
+          $ref: '#/definitions/models.Material'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'message: Material updated successfully'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid ID or incorrect data
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
+      summary: Updates an existing material
+      tags:
+      - materials
+swagger: "2.0"

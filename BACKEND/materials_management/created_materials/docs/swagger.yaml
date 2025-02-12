@@ -1,0 +1,55 @@
+basePath: /
+definitions:
+  models.Material:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      subject:
+        type: string
+    type: object
+host: localhost:8084
+info:
+  contact: {}
+  description: API for creating materials in the database.
+  title: Created Materials API
+  version: "1.0"
+paths:
+  /materials:
+    post:
+      consumes:
+      - application/json
+      description: Adds a new material entry to the database.
+      parameters:
+      - description: Material data
+        in: body
+        name: material
+        required: true
+        schema:
+          $ref: '#/definitions/models.Material'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 'message: Material created successfully'
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid input
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Create a new material
+      tags:
+      - materials
+swagger: "2.0"

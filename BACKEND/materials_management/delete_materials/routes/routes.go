@@ -1,18 +1,12 @@
 package routes
 
 import (
-	"delete_materials/controllers"
+	"delete_materials/controllers" //
 
-	"github.com/gin-gonic/gin"
+	"github.com/gorilla/mux"
 )
 
-// SetupRouter sets up all API routes for the microservice
-func SetupRouter() *gin.Engine {
-	r := gin.Default()
-
-	// Material routes
-	r.POST("/materials", controllers.DeleteMaterialHandler)
-	r.DELETE("/materials/:id", controllers.DeleteMaterialHandler)
-
-	return r
+// RegisterRoutes configura las rutas del microservicio
+func RegisterRoutes(router *mux.Router) {
+	router.HandleFunc("/materials/{id}", controllers.DeleteMaterial).Methods("DELETE") //
 }
