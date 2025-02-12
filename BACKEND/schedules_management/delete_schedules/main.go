@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	// Cargar variables de entorno para borrar
+	// Cargar variables de entorno
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal("Error loading .env file")

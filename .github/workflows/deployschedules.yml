@@ -1,4 +1,4 @@
-name: Docker Image CI/CD for Schedules Service
+name: Deploy Schedules Management Services to AWS
 
 on:
   push:
@@ -6,69 +6,26 @@ on:
       - test
     paths:
       - 'BACKEND/schedules_management/**'
-  pull_request:
-    paths:
-      - 'BACKEND/schedules_management/**'
-    branches: ["test", "main"]
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-    # 📥 Paso 1: Checkout del repositorio
-    - name: Checkout code
+    - name: 🚀 Checkout del código
       uses: actions/checkout@v3
 
-    # 🔑 Paso 2: Login en Docker Hub
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-
-    # 🏗️ Paso 3: Construcción de imágenes Docker
-    - name: Build Docker images
-      run: |
-        services=("created_schedules" "delete_schedules" "read_schedules" "update_schedules")
-        for service in "${services[@]}"; do
-          echo "Building image for $service..."
-          docker build $GITHUB_WORKSPACE/BACKEND/schedules_management/$service/. \
-            --file $GITHUB_WORKSPACE/BACKEND/schedules_management/$service/dockerfile \
-            --build-arg DB_HOST=${{ secrets.DB_HOST_SCHEDULES }} \
-            --build-arg DB_USER=${{ secrets.DB_USER_SCHEDULES }} \
-            --build-arg DB_PASSWORD=${{ secrets.DB_PASSWORD_SCHEDULES }} \
-            --build-arg DB_NAME=${{ secrets.DB_NAME_SCHEDULES }} \
-            --build-arg DB_PORT=${{ secrets.DB_PORT_SCHEDULES }} \
-            -t ${{ secrets.DOCKER_USERNAME }}/$service:latest
-        done
-
-    # 📤 Paso 4: Subir las imágenes a Docker Hub
-    - name: Push Docker images to Docker Hub
-      run: |
-        services=("created_schedules" "delete_schedules" "read_schedules" "update_schedules")
-        for service in "${services[@]}"; do
-          echo "Pushing image for $service..."
-          docker push ${{ secrets.DOCKER_USERNAME }}/$service:latest
-        done
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-    # 📡 Paso 1: Conectar al servidor EC2 usando SSH y desplegar los contenedores
-    - name: Deploy to EC2
+    - name: 🔑 Acceder al servidor EC2 y desplegar
       uses: appleboy/ssh-action@v0.1.8
       with:
         host: ${{ secrets.EC2_HOST_SCHEDULES_MANAGEMENT }}
         username: ubuntu
-        key: ${{ secrets.EC2_SSH_KEY_SCHEDULES}}
+        key: ${{ secrets.EC2_SSH_KEY_SCHEDULES }}
         port: 22
         script: |
           echo "✅ Conexión establecida con EC2"
-          
-          echo "🛠️ Verificando si Docker está instalado..."
+
+          echo "🛠️ Verificando si Docker y Docker Compose están instalados..."
           if ! command -v docker &> /dev/null; then
             echo "🔧 Instalando Docker..."
             sudo apt update -y
@@ -77,65 +34,80 @@ jobs:
             sudo usermod -aG docker ubuntu
           fi
 
-          echo "🛑 Eliminando contenedores existentes..."
-          docker stop created_schedules delete_schedules read_schedules update_schedules || true
-          docker rm created_schedules delete_schedules read_schedules update_schedules || true
+          echo "🔑 Iniciando sesión en Docker Hub..."
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+          echo "🛑 Eliminando contenedores e imágenes en conflicto..."
+          docker stop $(docker ps -aq) || true
+          docker rm $(docker ps -aq) || true
           docker rmi -f ${{ secrets.DOCKER_USERNAME }}/created_schedules:latest || true
           docker rmi -f ${{ secrets.DOCKER_USERNAME }}/delete_schedules:latest || true
           docker rmi -f ${{ secrets.DOCKER_USERNAME }}/read_schedules:latest || true
           docker rmi -f ${{ secrets.DOCKER_USERNAME }}/update_schedules:latest || true
           docker network prune -f || true
+          docker volume prune -f || true
 
-          echo "📦 Navegando al directorio del proyecto..."
+          echo "📦 Moviéndonos al directorio del proyecto..."
           cd ~/appSchool/BACKEND/schedules_management || mkdir -p ~/appSchool/BACKEND/schedules_management && cd ~/appSchool/BACKEND/schedules_management
 
-          echo "📥 Descargando imágenes desde Docker Hub..."
-          docker pull ${{ secrets.DOCKER_USERNAME }}/created_schedules:latest
-          docker pull ${{ secrets.DOCKER_USERNAME }}/delete_schedules:latest
-          docker pull ${{ secrets.DOCKER_USERNAME }}/read_schedules:latest
-          docker pull ${{ secrets.DOCKER_USERNAME }}/update_schedules:latest
+          echo "📂 Creando archivo .env..."
+          cat <<EOF > .env
+          DB_HOST=${{ secrets.DB_HOST_SCHEDULES }}
+          DB_PORT=${{ secrets.DB_PORT_SCHEDULES }}
+          DB_USER=${{ secrets.DB_USER_SCHEDULES }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD_SCHEDULES }}
+          DB_NAME=${{ secrets.DB_NAME_SCHEDULES }}
+          EOF
 
           echo "⬇️ Creando nuevo docker-compose.yml..."
           cat <<EOF > docker-compose.yml
           version: '3.8'
           services:
             created_schedules:
-              image: "${{ secrets.DOCKER_USERNAME }}/created_schedules:latest"
+              image: ${{ secrets.DOCKER_USERNAME }}/created_schedules:latest
               container_name: created_schedules
+              restart: always
               ports:
                 - "6000:6000"
               env_file:
                 - .env
 
             delete_schedules:
-              image: "${{ secrets.DOCKER_USERNAME }}/delete_schedules:latest"
+              image: ${{ secrets.DOCKER_USERNAME }}/delete_schedules:latest
               container_name: delete_schedules
+              restart: always
               ports:
                 - "6002:6002"
               env_file:
                 - .env
 
             read_schedules:
-              image: "${{ secrets.DOCKER_USERNAME }}/read_schedules:latest"
+              image: ${{ secrets.DOCKER_USERNAME }}/read_schedules:latest
               container_name: read_schedules
+              restart: always
               ports:
                 - "6001:6001"
               env_file:
                 - .env
 
             update_schedules:
-              image: "${{ secrets.DOCKER_USERNAME }}/update_schedules:latest"
+              image: ${{ secrets.DOCKER_USERNAME }}/update_schedules:latest
               container_name: update_schedules
+              restart: always
               ports:
                 - "6003:6003"
               env_file:
                 - .env
           EOF
 
+          echo "📥 Descargando imágenes de Docker..."
+          docker pull ${{ secrets.DOCKER_USERNAME }}/created_schedules:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/delete_schedules:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/read_schedules:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/update_schedules:latest
+
           echo "🚀 Desplegando servicios con Docker Compose..."
           docker-compose up -d --force-recreate --remove-orphans
 
           echo "🔍 Verificando contenedores en ejecución..."
           docker ps
-
-          echo "✅ Despliegue completado con éxito"
