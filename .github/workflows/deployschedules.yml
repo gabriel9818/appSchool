@@ -1,84 +1,103 @@
-name: 🚀 Deploy Product Create Service to AWS
+name: CI/CD for Schedules Management
 
 on:
   push:
-    paths:
-      - 'Backend_uceShoes/productManagement/productCreation/Products/productCreate/**'
     branches:
-      - TestConectionProducts
+      - test
+      - main
+    paths:
+      - 'BACKEND/schedules_management/**'
+  pull_request:
+    branches:
+      - test
+      - main
+    paths:
+      - 'BACKEND/schedules_management/**'
 
 jobs:
-  build-and-deploy:
-    name: Build and Push Docker Image
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🛠️ Checkout repository
-        uses: actions/checkout@v4
+    # 📥 Paso 1: Checkout del repositorio
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: 🔧 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+    # 🛠️ Paso 2: Instalar Docker y Docker Compose
+    - name: Install Docker & Docker Compose
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose
 
-      - name: 🔐 Log in to Docker Hub
-        run: |
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+    # 🔑 Paso 3: Login en Docker Hub
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: 📦 Build and push Docker image
-        run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/product-create:latest \
-            -f Backend_uceShoes/productManagement/productCreation/Products/productCreate/Dockerfile \
-            Backend_uceShoes/productManagement/productCreation/Products/productCreate
-          docker push ${{ secrets.DOCKER_USERNAME }}/product-create:latest
+    # 🐳 Paso 4: Construcción de las imágenes Docker
+    - name: Build Docker images
+      run: |
+        cd $GITHUB_WORKSPACE/BACKEND/schedules_management
+        docker-compose build
+
+    # 📤 Paso 5: Subir las imágenes a Docker Hub
+    - name: Push Docker images to Docker Hub
+      run: |
+        cd $GITHUB_WORKSPACE/BACKEND/schedules_management
+        docker-compose push
 
   deploy:
-    name: Deploy to EC2
+    needs: build
     runs-on: ubuntu-latest
-    needs: build-and-deploy
 
     steps:
-      - name: 🚀 Connect to EC2 and Deploy Product Create Service
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST_PRODUCT_CREATE }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          port: 22
-          script: |
-            echo "🔍 Checking if Docker is installed..."
-            if ! command -v docker &> /dev/null; then
-              echo "📦 Installing Docker..."
-              sudo yum update -y
-              sudo yum install -y docker
-              sudo service docker start
-              sudo usermod -a -G docker $USER
-            fi
+    # 📡 Paso 1: Conectar a EC2 (Amazon Linux) y desplegar servicios
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ec2-user
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
+        script: |
+          echo "🔄 Configurando el entorno en EC2..."
+          echo "export DB_HOST=${{ secrets.DB_HOST }}" >> ~/.bashrc
+          echo "export DB_USER=${{ secrets.DB_USER }}" >> ~/.bashrc
+          echo "export DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> ~/.bashrc
+          echo "export DB_NAME=${{ secrets.DB_NAME }}" >> ~/.bashrc
+          source ~/.bashrc
 
-            echo "🛑 Stopping and removing previous container..."
-            sudo docker stop product-create || true
-            sudo docker rm product-create || true
+          echo "📦 Navegando al directorio del proyecto..."
+          cd ~/appSchool/BACKEND/schedules_management
 
-            echo "🧹 Removing old Docker images..."
-            sudo docker image prune -af
+          echo "🛠️ Verificando si Docker está instalado en EC2..."
+          if ! command -v docker &> /dev/null; then
+            echo "🔧 Instalando Docker en Amazon Linux..."
+            sudo yum update -y
+            sudo yum install -y docker
+            sudo systemctl start docker
+            sudo usermod -aG docker ec2-user
+          fi
 
-            echo "📥 Pulling the latest Docker image..."
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/product-create:latest
+          echo "🛠️ Verificando si Docker Compose está instalado..."
+          if ! command -v docker-compose &> /dev/null; then
+            echo "🔧 Instalando Docker Compose..."
+            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+          fi
 
-            echo "🚀 Running the new container..."
-            sudo docker run -d \
-              --name product-create \
-              -p ${{ secrets.SERVER_PORT_CREATE_PRODUCT }}:${{ secrets.SERVER_PORT_CREATE_PRODUCT }} \
-              -e POSTGRES_HOST=${{ secrets.POSTGRES_HOST }} \
-              -e POSTGRES_PORT=${{ secrets.POSTGRES_PORT }} \
-              -e POSTGRES_USER=${{ secrets.POSTGRES_USER }} \
-              -e POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} \
-              -e POSTGRES_DB=${{ secrets.POSTGRES_DB }} \
-              --restart always \
-              ${{ secrets.DOCKER_USERNAME }}/product-create:latest
+          echo "🛑 Deteniendo y eliminando contenedores previos..."
+          sudo docker-compose down || true
 
-            echo "🔍 Verifying deployment..."
-            if sudo docker ps -f name=product-create | grep product-create; then
-              echo "✅ Deployment successful: Product Create Service is running."
-            else
-              echo "❌ Deployment failed: Check logs for errors."
-              exit 1
-            fi 
+          echo "⬇️ Descargando las últimas imágenes desde Docker Hub..."
+          sudo docker-compose pull
+
+          echo "🚀 Levantando los nuevos contenedores..."
+          sudo docker-compose up -d --force-recreate --remove-orphans
+
+          echo "🔍 Verificando contenedores en ejecución..."
+          sudo docker ps
+
+          echo "✅ Despliegue completado en EC2"
