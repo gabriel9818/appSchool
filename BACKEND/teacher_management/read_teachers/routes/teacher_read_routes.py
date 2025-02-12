@@ -4,7 +4,7 @@ from db.database import get_db
 from controllers.teacher_read_controller import get_all_teachers, get_teacher_by_id
 
 router = APIRouter()
-##Teachers test 15
+##Teachers test 16
 
 @router.get("/teachers_read")
 def read_all_teachers(db: Session = Depends(get_db)):
