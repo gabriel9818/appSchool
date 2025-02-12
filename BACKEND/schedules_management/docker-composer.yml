@@ -7,11 +7,12 @@ services:
     restart: always
     ports:
       - "6000:6000"
-    env_file:
-      - .env
-    working_dir: /app
-    volumes:
-      - .env:/app/.env
+    environment:
+      - DB_HOST=${DB_HOST_SCHEDULES}
+      - DB_PORT=${DB_PORT_SCHEDULES}
+      - DB_USER=${DB_USER_SCHEDULES}
+      - DB_PASSWORD=${DB_PASSWORD_SCHEDULES}
+      - DB_NAME=${DB_NAME_SCHEDULES}
 
   delete_schedules:
     image: gabrielrv/delete_schedules:latest
@@ -19,11 +20,12 @@ services:
     restart: always
     ports:
       - "6002:6002"
-    env_file:
-      - .env
-    working_dir: /app
-    volumes:
-      - .env:/app/.env
+    environment:
+      - DB_HOST=${DB_HOST_SCHEDULES}
+      - DB_PORT=${DB_PORT_SCHEDULES}
+      - DB_USER=${DB_USER_SCHEDULES}
+      - DB_PASSWORD=${DB_PASSWORD_SCHEDULES}
+      - DB_NAME=${DB_NAME_SCHEDULES}
 
   read_schedules:
     image: gabrielrv/read_schedules:latest
@@ -31,11 +33,12 @@ services:
     restart: always
     ports:
       - "6001:6001"
-    env_file:
-      - .env
-    working_dir: /app
-    volumes:
-      - .env:/app/.env
+    environment:
+      - DB_HOST=${DB_HOST_SCHEDULES}
+      - DB_PORT=${DB_PORT_SCHEDULES}
+      - DB_USER=${DB_USER_SCHEDULES}
+      - DB_PASSWORD=${DB_PASSWORD_SCHEDULES}
+      - DB_NAME=${DB_NAME_SCHEDULES}
 
   update_schedules:
     image: gabrielrv/update_schedules:latest
@@ -43,8 +46,9 @@ services:
     restart: always
     ports:
       - "6003:6003"
-    env_file:
-      - .env
-    working_dir: /app
-    volumes:
-      - .env:/app/.env
+    environment:
+      - DB_HOST=${DB_HOST_SCHEDULES}
+      - DB_PORT=${DB_PORT_SCHEDULES}
+      - DB_USER=${DB_USER_SCHEDULES}
+      - DB_PASSWORD=${DB_PASSWORD_SCHEDULES}
+      - DB_NAME=${DB_NAME_SCHEDULES}

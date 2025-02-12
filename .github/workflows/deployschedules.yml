@@ -37,20 +37,20 @@ jobs:
           echo "🔑 Iniciando sesión en Docker Hub..."
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-          echo "🛑 Eliminando contenedores e imágenes en conflicto..."
-          docker stop $(docker ps -aq) || true
-          docker rm $(docker ps -aq) || true
-          docker rmi -f ${{ secrets.DOCKER_USERNAME }}/created_schedules:latest || true
-          docker rmi -f ${{ secrets.DOCKER_USERNAME }}/delete_schedules:latest || true
-          docker rmi -f ${{ secrets.DOCKER_USERNAME }}/read_schedules:latest || true
-          docker rmi -f ${{ secrets.DOCKER_USERNAME }}/update_schedules:latest || true
+          echo "🛑 Eliminando contenedores en conflicto..."
+          docker stop created_schedules delete_schedules read_schedules update_schedules || true
+          docker rm created_schedules delete_schedules read_schedules update_schedules || true
+          docker rmi -f gabrielrv/created_schedules:latest || true
+          docker rmi -f gabrielrv/delete_schedules:latest || true
+          docker rmi -f gabrielrv/read_schedules:latest || true
+          docker rmi -f gabrielrv/update_schedules:latest || true
           docker network prune -f || true
           docker volume prune -f || true
 
           echo "📦 Moviéndonos al directorio del proyecto..."
           cd ~/appSchool/BACKEND/schedules_management || mkdir -p ~/appSchool/BACKEND/schedules_management && cd ~/appSchool/BACKEND/schedules_management
 
-          echo "📂 Creando archivo .env..."
+          echo "📂 Creando archivo .env con GitHub Secrets..."
           cat <<EOF > .env
           DB_HOST=${{ secrets.DB_HOST_SCHEDULES }}
           DB_PORT=${{ secrets.DB_PORT_SCHEDULES }}
@@ -64,47 +64,63 @@ jobs:
           version: '3.8'
           services:
             created_schedules:
-              image: ${{ secrets.DOCKER_USERNAME }}/created_schedules:latest
+              image: gabrielrv/created_schedules:latest
               container_name: created_schedules
               restart: always
               ports:
                 - "6000:6000"
-              env_file:
-                - .env
+              environment:
+                - DB_HOST=${DB_HOST_SCHEDULES}
+                - DB_PORT=${DB_PORT_SCHEDULES}
+                - DB_USER=${DB_USER_SCHEDULES}
+                - DB_PASSWORD=${DB_PASSWORD_SCHEDULES}
+                - DB_NAME=${DB_NAME_SCHEDULES}
 
             delete_schedules:
-              image: ${{ secrets.DOCKER_USERNAME }}/delete_schedules:latest
+              image: gabrielrv/delete_schedules:latest
               container_name: delete_schedules
               restart: always
               ports:
                 - "6002:6002"
-              env_file:
-                - .env
+              environment:
+                - DB_HOST=${DB_HOST_SCHEDULES}
+                - DB_PORT=${DB_PORT_SCHEDULES}
+                - DB_USER=${DB_USER_SCHEDULES}
+                - DB_PASSWORD=${DB_PASSWORD_SCHEDULES}
+                - DB_NAME=${DB_NAME_SCHEDULES}
 
             read_schedules:
-              image: ${{ secrets.DOCKER_USERNAME }}/read_schedules:latest
+              image: gabrielrv/read_schedules:latest
               container_name: read_schedules
               restart: always
               ports:
                 - "6001:6001"
-              env_file:
-                - .env
+              environment:
+                - DB_HOST=${DB_HOST_SCHEDULES}
+                - DB_PORT=${DB_PORT_SCHEDULES}
+                - DB_USER=${DB_USER_SCHEDULES}
+                - DB_PASSWORD=${DB_PASSWORD_SCHEDULES}
+                - DB_NAME=${DB_NAME_SCHEDULES}
 
             update_schedules:
-              image: ${{ secrets.DOCKER_USERNAME }}/update_schedules:latest
+              image: gabrielrv/update_schedules:latest
               container_name: update_schedules
               restart: always
               ports:
                 - "6003:6003"
-              env_file:
-                - .env
+              environment:
+                - DB_HOST=${DB_HOST_SCHEDULES}
+                - DB_PORT=${DB_PORT_SCHEDULES}
+                - DB_USER=${DB_USER_SCHEDULES}
+                - DB_PASSWORD=${DB_PASSWORD_SCHEDULES}
+                - DB_NAME=${DB_NAME_SCHEDULES}
           EOF
 
           echo "📥 Descargando imágenes de Docker..."
-          docker pull ${{ secrets.DOCKER_USERNAME }}/created_schedules:latest
-          docker pull ${{ secrets.DOCKER_USERNAME }}/delete_schedules:latest
-          docker pull ${{ secrets.DOCKER_USERNAME }}/read_schedules:latest
-          docker pull ${{ secrets.DOCKER_USERNAME }}/update_schedules:latest
+          docker pull gabrielrv/created_schedules:latest
+          docker pull gabrielrv/delete_schedules:latest
+          docker pull gabrielrv/read_schedules:latest
+          docker pull gabrielrv/update_schedules:latest
 
           echo "🚀 Desplegando servicios con Docker Compose..."
           docker-compose up -d --force-recreate --remove-orphans
