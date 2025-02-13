@@ -1,0 +1,9 @@
+fastapi
+strawberry-graphql
+uvicorn
+sqlalchemy
+asyncpg
+psycopg2
+pydantic
+httpx
+python-dotenv
