@@ -1,4 +1,4 @@
-version: "3.8"
+version: '3.8'
 
 services:
   created_schedules:
@@ -9,6 +9,8 @@ services:
       - .env
     ports:
       - "6000:6000"
+    networks:
+      - schedules_network
 
   read_schedules:
     image: ${{ secrets.DOCKER_USERNAME }}/read_schedules:latest
@@ -18,6 +20,8 @@ services:
       - .env
     ports:
       - "6001:6001"
+    networks:
+      - schedules_network
 
   update_schedules:
     image: ${{ secrets.DOCKER_USERNAME }}/update_schedules:latest
@@ -26,7 +30,9 @@ services:
     env_file:
       - .env
     ports:
-      - "6002:6002"
+      - "6003:6003"
+    networks:
+      - schedules_network
 
   delete_schedules:
     image: ${{ secrets.DOCKER_USERNAME }}/delete_schedules:latest
@@ -35,4 +41,10 @@ services:
     env_file:
       - .env
     ports:
-      - "6003:6003"
+      - "6002:6002"
+    networks:
+      - schedules_network
+
+networks:
+  schedules_network:
+    driver: bridge
