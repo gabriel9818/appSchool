@@ -65,7 +65,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 📡 Paso 1: Conectar a EC2 y desplegar
+    # 📡 Paso 1: Copiar `docker-compose.yml` a EC2
+    - name: Copy docker-compose.yml to EC2
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.EC2_HOST_GRADES }}
+        username: ec2-user
+        key: ${{ secrets.EC2_SSH_KEY_GRADES }}
+        source: "BACKEND/grade_management/docker-compose.yml"
+        target: "~/appGrades/BACKEND/grade_management/"
+
+    # 📡 Paso 2: Conectar a EC2 y desplegar
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.8
       with:
