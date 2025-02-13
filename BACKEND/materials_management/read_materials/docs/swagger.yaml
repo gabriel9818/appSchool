@@ -1,0 +1,44 @@
+basePath: /
+definitions:
+  models.Material:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      subject:
+        type: string
+    type: object
+host: localhost:8081
+info:
+  contact: {}
+  description: API for reading materials from the database.
+  title: Read Materials API
+  version: "1.0"
+paths:
+  /materials:
+    get:
+      consumes:
+      - application/json
+      description: Returns a list of all materials stored in the database.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Material'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Gets all materials
+      tags:
+      - materials
+swagger: "2.0"
