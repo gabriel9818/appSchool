@@ -1,45 +1,58 @@
-version: "3.8"
+version: '3.8'
 
 services:
-  created_student:
-    build: ./created_student
+  created_student_registration:
+    image: ${{ secrets.DOCKER_USERNAME }}/created_student_registration:latest
+    container_name: created_student_registration
+    restart: always
+    environment:
+      - APP_PORT=8085
     ports:
       - "8085:8085"
     env_file:
-      - ./created_student/.env
-    depends_on:
-      - mysql
+      - .env
+    networks:
+      - student_registration_network
 
-  delete_student:
-    build: ./delete_student
+  delete_student_registration:
+    image: ${{ secrets.DOCKER_USERNAME }}/delete_student_registration:latest
+    container_name: delete_student_registration
+    restart: always
+    environment:
+      - APP_PORT=8086
     ports:
       - "8086:8086"
     env_file:
-      - ./delete_student/.env
-    depends_on:
-      - mysql
+      - .env
+    networks:
+      - student_registration_network
 
-  read_student:
-    build: ./read_student
+  read_student_registration:
+    image: ${{ secrets.DOCKER_USERNAME }}/read_student_registration:latest
+    container_name: read_student_registration
+    restart: always
+    environment:
+      - APP_PORT=8087
     ports:
       - "8087:8087"
     env_file:
-      - ./read_student/.env
-    depends_on:
-      - mysql
+      - .env
+    networks:
+      - student_registration_network
 
-  mysql:
-    image: mysql:8
+  update_student_registration:
+    image: ${{ secrets.DOCKER_USERNAME }}/update_student_registration:latest
+    container_name: update_student_registration
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: student_db
-      MYSQL_USER: student_user
-      MYSQL_PASSWORD: student_password
+      - APP_PORT=8088
     ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
+      - "8088:8088"
+    env_file:
+      - .env
+    networks:
+      - student_registration_network
 
-volumes:
-  mysql_data:
+networks:
+  student_registration_network:
+    driver: bridge

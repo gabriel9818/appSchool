@@ -1,30 +1,135 @@
-name: Deploy to EC2
+name: Deploy Student Registration Services to AWS
 
 on:
   push:
     branches:
-      - main
+      - test
+    paths:
+      - 'BACKEND/student_registration/**'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: 🚀 Checkout del código
+      uses: actions/checkout@v3
 
-      - name: Set up SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+    - name: 🔑 Acceder al servidor EC2 y desplegar
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.EC2_HOST_STUDENT_REGISTRATION }}
+        username: admin
+        key: ${{ secrets.EC2_SSH_KEY_STUDENT_REGISTRATION }}
+        port: 22
+        script: |
+          echo "✅ Conexión establecida con EC2"
 
-      - name: Deploy to EC2
-        run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            cd /home/${{ secrets.EC2_USER }}/app
-            git pull origin main
-            docker-compose down
-            docker-compose up -d --build
+          echo "🛠️ Verificando si Docker y Docker Compose están instalados..."
+          if ! command -v docker &> /dev/null; then
+            echo "🔧 Instalando Docker..."
+            sudo apt update
+            sudo apt install -y docker.io
+            sudo systemctl start docker
+            sudo systemctl enable docker
+            sudo usermod -aG docker $USER
+          fi
+
+          if ! command -v docker-compose &> /dev/null; then
+            echo "🔧 Instalando Docker Compose..."
+            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+          fi
+
+          echo "🔑 Iniciando sesión en Docker Hub..."
+          echo "${{ secrets.DOCKER_PASSWORD_GT }}" | docker login -u "${{ secrets.DOCKER_USERNAME_GT }}" --password-stdin
+
+          echo "🛑 Eliminando contenedores e imágenes antiguas..."
+          docker stop $(docker ps -aq) || true
+          docker rm $(docker ps -aq) || true
+          docker rmi -f ${{ secrets.DOCKER_USERNAME_GT }}/created_student_registration:latest || true
+          docker rmi -f ${{ secrets.DOCKER_USERNAME_GT }}/delete_student_registration:latest || true
+          docker rmi -f ${{ secrets.DOCKER_USERNAME_GT }}/read_student_registration:latest || true
+          docker rmi -f ${{ secrets.DOCKER_USERNAME_GT }}/update_student_registration:latest || true
+          docker network prune -f || true
+          docker volume prune -f || true
+
+          echo "📦 Moviéndonos al directorio del proyecto..."
+          cd ~/appStudent/BACKEND/student_registration || mkdir -p ~/appStudent/BACKEND/student_registration && cd ~/appStudent/BACKEND/student_registration
+
+          echo "📂 Creando archivo .env correctamente..."
+          cat <<EOF > .env
+          DB_HOST=${{ secrets.DB_HOST_STUDENT_REGISTRATION }}
+          DB_PORT=5432
+          DB_USER=${{ secrets.DB_USER_STUDENT_REGISTRATION }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD_STUDENT_REGISTRATION }}
+          DB_NAME=${{ secrets.DB_NAME_STUDENT_REGISTRATION }}
+          DB_SSL=true
           EOF
+
+          echo "✅ Archivo .env creado con éxito:"
+          cat ~/appStudent/BACKEND/student_registration/.env
+
+          echo "⬇️ Creando nuevo docker-compose.yml..."
+          cat <<EOF > docker-compose.yml
+          version: '3.8'
+          services:
+            created_student_registration:
+              image: ${{ secrets.DOCKER_USERNAME_GT }}/created_student_registration:latest
+              container_name: created_student_registration
+              restart: always
+              environment:
+                - APP_PORT=8085
+              ports:
+                - "8085:8085"
+              env_file:
+                - .env
+
+            delete_student_registration:
+              image: ${{ secrets.DOCKER_USERNAME_GT }}/delete_student_registration:latest
+              container_name: delete_student_registration
+              restart: always
+              environment:
+                - APP_PORT=8086
+              ports:
+                - "8086:8086"
+              env_file:
+                - .env
+
+            read_student_registration:
+              image: ${{ secrets.DOCKER_USERNAME_GT }}/read_student_registration:latest
+              container_name: read_student_registration
+              restart: always
+              environment:
+                - APP_PORT=8087
+              ports:
+                - "8087:8087"
+              env_file:
+                - .env
+
+            update_student_registration:
+              image: ${{ secrets.DOCKER_USERNAME_GT }}/update_student_registration:latest
+              container_name: update_student_registration
+              restart: always
+              environment:
+                - APP_PORT=8088
+              ports:
+                - "8088:8088"
+              env_file:
+                - .env
+          EOF
+
+          echo "✅ Archivo docker-compose.yml creado con éxito."
+          cat ~/appStudent/BACKEND/student_registration/docker-compose.yml
+
+          echo "📥 Descargando imágenes de Docker..."
+          docker pull ${{ secrets.DOCKER_USERNAME_GT }}/created_student_registration:latest
+          docker pull ${{ secrets.DOCKER_USERNAME_GT }}/delete_student_registration:latest
+          docker pull ${{ secrets.DOCKER_USERNAME_GT }}/read_student_registration:latest
+          docker pull ${{ secrets.DOCKER_USERNAME_GT }}/update_student_registration:latest
+
+          echo "🚀 Desplegando servicios con Docker Compose..."
+          docker-compose up -d --force-recreate --remove-orphans
+
+          echo "🔍 Verificando contenedores en ejecución..."
+          docker ps
