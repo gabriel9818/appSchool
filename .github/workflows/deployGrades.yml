@@ -15,7 +15,7 @@ jobs:
     - name: 🚀 Checkout del código
       uses: actions/checkout@v3
 
-    - name: 🛠️ Construir y subir imágenes a Docker Hub
+    - name: 🔧 Construcción y subida de imágenes a Docker Hub
       run: |
         docker build -t ${{ secrets.DOCKER_USERNAME }}/created_grades:latest BACKEND/grade_management/created_grades
         docker build -t ${{ secrets.DOCKER_USERNAME }}/delete_grades:latest BACKEND/grade_management/delete_grades
@@ -59,7 +59,43 @@ jobs:
 
           echo "⬇️ Creando nuevo docker-compose.yml..."
           cat <<EOF > docker-compose.yml
-          $(cat BACKEND/grade_management/docker-compose.yml)
+          version: '3.8'
+          services:
+            created_grades:
+              image: ${{ secrets.DOCKER_USERNAME }}/created_grades:latest
+              container_name: created_grades
+              restart: always
+              ports:
+                - "2000:2000"
+              environment:
+                - APP_PORT=2000
+
+            delete_grades:
+              image: ${{ secrets.DOCKER_USERNAME }}/delete_grades:latest
+              container_name: delete_grades
+              restart: always
+              ports:
+                - "2003:2003"
+              environment:
+                - APP_PORT=2003
+
+            read_grades:
+              image: ${{ secrets.DOCKER_USERNAME }}/read_grades:latest
+              container_name: read_grades
+              restart: always
+              ports:
+                - "2001:2001"
+              environment:
+                - APP_PORT=2001
+
+            update_grades:
+              image: ${{ secrets.DOCKER_USERNAME }}/update_grades:latest
+              container_name: update_grades
+              restart: always
+              ports:
+                - "2002:2002"
+              environment:
+                - APP_PORT=2002
           EOF
 
           echo "📥 Descargando imágenes de Docker..."
