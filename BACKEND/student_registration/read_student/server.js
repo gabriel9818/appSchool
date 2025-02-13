@@ -37,7 +37,7 @@ app.get("/", () => "Welcome to the Read Students Microservice!");
 app.listen(process.env.APP_PORT || 8087);
 
 console.log(`Server running on http://18.210.147.186:${process.env.APP_PORT || 8087}`);
-console.log(`📄 Swagger docs available at http://18.210.147.186:${process.env.APP_PORT || 8087}/swagger`);
+console.log(`Swagger docs available at http://18.210.147.186:${process.env.APP_PORT || 8087}/swagger`);
 
 // ✅ Corrección de GraphQL Yoga
 const schema = makeExecutableSchema({ typeDefs, resolvers }); // Se usa makeExecutableSchema para evitar errores

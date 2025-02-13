@@ -15,6 +15,23 @@ jobs:
     - name: 🚀 Checkout del código
       uses: actions/checkout@v3
 
+    - name: 🛠️ Instalar Docker CLI
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker.io
+
+    - name: 🔄 Construir imagen de Docker
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/attendance:latest BACKEND/attendance/
+
+    - name: 🔑 Iniciar sesión en Docker Hub
+      run: |
+        echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    - name: 🚀 Subir imagen a Docker Hub
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/attendance:latest
+
     - name: 🔑 Acceder a EC2 y desplegar
       uses: appleboy/ssh-action@v0.1.8
       with:
@@ -35,6 +52,12 @@ jobs:
             newgrp docker
           fi
 
+          if ! command -v docker-compose &> /dev/null; then
+            echo "🔧 Instalando Docker Compose..."
+            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+          fi
+
           echo "🔑 Iniciando sesión en Docker Hub..."
           echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
@@ -43,22 +66,4 @@ jobs:
           sudo docker rm attendance_service || true
           sudo docker rmi -f ${{ secrets.DOCKER_USERNAME }}/attendance:latest || true
           sudo docker network prune -f || true
-          sudo docker volume prune -f || true
-
-          echo "📥 Descargando nueva imagen de Docker..."
-          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/attendance:latest
-
-          echo "🚀 Ejecutando el servicio en el puerto 7000..."
-          sudo docker run -d \
-            --name attendance_service \
-            --restart always \
-            -p 7000:7000 \
-            -e DB_HOST=${{ secrets.DB_HOST_ATTENDANCE }} \
-            -e DB_PORT=5432 \
-            -e DB_USER=${{ secrets.DB_USER_ATTENDANCE }} \
-            -e DB_PASS=${{ secrets.DB_PASS_ATTENDANCE }} \
-            -e DB_NAME=${{ secrets.DB_NAME_ATTENDANCE }} \
-            ${{ secrets.DOCKER_USERNAME }}/attendance:latest
-
-          echo "🔍 Verificando contenedores en ejecución..."
-          sudo docker ps
+          sudo docker volume prune -f ||
