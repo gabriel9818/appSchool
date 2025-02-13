@@ -11,7 +11,7 @@ RUN go mod download
 # Copiar el código fuente
 COPY . .
 
-# la aplicación
+# compila aplicación
 RUN go build -o main .
 
 # Crear una imagen final ligera con solo el binario

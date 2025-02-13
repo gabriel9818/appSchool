@@ -1,4 +1,4 @@
-name: Docker Image CI/CD for Schedules Microservices
+name: Deploy Schedules Management Services to AWS
 
 on:
   push:
@@ -6,63 +6,16 @@ on:
       - test
     paths:
       - 'BACKEND/schedules_management/**'
-  pull_request:
-    paths:
-      - 'BACKEND/schedules_management/**'
-    branches: ["test", "main"]
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-    # 📥 Paso 1: Checkout del código
-    - name: Checkout code
+    - name: 🚀 Checkout del código
       uses: actions/checkout@v3
 
-    # 🛠️ Paso 2: Debug de la estructura del repositorio
-    - name: Debug repository structure
-      run: |
-        echo "📂 Listando archivos en el workspace..."
-        ls -R $GITHUB_WORKSPACE
-
-    # 🔑 Paso 3: Login en Docker Hub
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-
-    # 🐳 Paso 4: Construcción de imágenes Docker para cada microservicio
-    - name: Build Docker images
-      run: |
-        for service in created_schedules read_schedules update_schedules delete_schedules; do
-          echo "🚀 Construyendo imagen para $service..."
-          docker build $GITHUB_WORKSPACE/BACKEND/schedules_management/$service/. \
-            --file $GITHUB_WORKSPACE/BACKEND/schedules_management/$service/dockerfile \
-            --build-arg DB_HOST=${{ secrets.DB_HOST_SCHEDULES }} \
-            --build-arg DB_USER=${{ secrets.DB_USER_SCHEDULES }} \
-            --build-arg DB_PASSWORD=${{ secrets.DB_PASSWORD_SCHEDULES }} \
-            --build-arg DB_NAME=${{ secrets.DB_NAME_SCHEDULES }} \
-            --build-arg SERVER_PORT=3306 \
-            -t ${{ secrets.DOCKER_USERNAME }}/$service:latest
-        done
-
-    # 📤 Paso 5: Subir imágenes a Docker Hub
-    - name: Push Docker images to Docker Hub
-      run: |
-        for service in created_schedules read_schedules update_schedules delete_schedules; do
-          echo "📤 Subiendo imagen para $service..."
-          docker push ${{ secrets.DOCKER_USERNAME }}/$service:latest
-        done
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-    # 📡 Paso 1: Conectar a EC2 usando SSH
-    - name: Deploy to EC2
+    - name: 🔑 Acceder al servidor EC2 y desplegar
       uses: appleboy/ssh-action@v0.1.8
       with:
         host: ${{ secrets.EC2_HOST_SCHEDULES }}
@@ -70,47 +23,97 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY_SCHEDULES }}
         port: 22
         script: |
-          echo "🔄 Creando directorio en EC2..."
-          mkdir -p ~/appSchedules/BACKEND/schedules_management
+          echo "✅ Conexión establecida con EC2"
 
-          echo "📝 Creando archivo .env global..."
-          cat <<EOF > ~/appSchedules/BACKEND/schedules_management/.env
-          DB_USER=${{ secrets.DB_USER_SCHEDULES }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD_SCHEDULES }}
-          DB_HOST=${{ secrets.DB_HOST_SCHEDULES }}
-          DB_PORT=3306
-          DB_NAME=${{ secrets.DB_NAME_SCHEDULES }}
-          EOF
-
-          echo "📦 Verificando contenido del .env..."
-          cat ~/appSchedules/BACKEND/schedules_management/.env
-
-          echo "🛠️ Instalando Docker si es necesario..."
+          echo "🛠️ Verificando si Docker y Docker Compose están instalados..."
           if ! command -v docker &> /dev/null; then
+            echo "🔧 Instalando Docker..."
             sudo yum update -y
             sudo yum install -y docker
             sudo systemctl start docker
-            sudo systemctl enable docker
             sudo usermod -aG docker ec2-user
           fi
 
-          echo "🛠️ Instalando Docker Compose si es necesario..."
           if ! command -v docker-compose &> /dev/null; then
+            echo "🔧 Instalando Docker Compose..."
             sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
             sudo chmod +x /usr/local/bin/docker-compose
           fi
 
-          echo "🛑 Deteniendo contenedores antiguos..."
-          sudo docker-compose -f ~/appSchedules/BACKEND/schedules_management/docker-compose.yml down
+          echo "🔑 Iniciando sesión en Docker Hub..."
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-          echo "⬇️ Descargando últimas imágenes..."
-          for service in created_schedules read_schedules update_schedules delete_schedules; do
-            echo "📥 Descargando imagen para $service..."
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/$service:latest
-          done
+          echo "🛑 Eliminando contenedores e imágenes en conflicto..."
+          docker stop $(docker ps -aq) || true
+          docker rm $(docker ps -aq) || true
+          docker rmi -f ${{ secrets.DOCKER_USERNAME }}/created_schedules:latest || true
+          docker rmi -f ${{ secrets.DOCKER_USERNAME }}/read_schedules:latest || true
+          docker rmi -f ${{ secrets.DOCKER_USERNAME }}/update_schedules:latest || true
+          docker rmi -f ${{ secrets.DOCKER_USERNAME }}/delete_schedules:latest || true
+          docker network prune -f || true
+          docker volume prune -f || true
 
-          echo "🚀 Levantando los contenedores con Docker Compose..."
-          sudo docker-compose -f ~/appSchedules/BACKEND/schedules_management/docker-compose.yml up -d
+          echo "📦 Moviéndonos al directorio del proyecto..."
+          cd ~/appSchedules/BACKEND/schedules_management || mkdir -p ~/appSchedules/BACKEND/schedules_management && cd ~/appSchedules/BACKEND/schedules_management
 
-          echo "🔍 Verificando contenedores..."
-          sudo docker ps
+          echo "📂 Creando archivo .env..."
+          cat <<EOF > .env
+          DB_HOST=${{ secrets.DB_HOST_SCHEDULES }}
+          DB_PORT=3306
+          DB_USER=${{ secrets.DB_USER_SCHEDULES }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD_SCHEDULES }}
+          DB_NAME=${{ secrets.DB_NAME_SCHEDULES }}
+          EOF
+
+          echo "⬇️ Creando nuevo docker-compose.yml..."
+          cat <<EOF > docker-compose.yml
+          version: '3.8'
+          services:
+            created_schedules:
+              image: ${{ secrets.DOCKER_USERNAME }}/created_schedules:latest
+              container_name: created_schedules
+              restart: always
+              ports:
+                - "6000:6000"
+              env_file:
+                - .env
+
+            read_schedules:
+              image: ${{ secrets.DOCKER_USERNAME }}/read_schedules:latest
+              container_name: read_schedules
+              restart: always
+              ports:
+                - "6001:6001"
+              env_file:
+                - .env
+
+            update_schedules:
+              image: ${{ secrets.DOCKER_USERNAME }}/update_schedules:latest
+              container_name: update_schedules
+              restart: always
+              ports:
+                - "6003:6003"
+              env_file:
+                - .env
+
+            delete_schedules:
+              image: ${{ secrets.DOCKER_USERNAME }}/delete_schedules:latest
+              container_name: delete_schedules
+              restart: always
+              ports:
+                - "6002:6002"
+              env_file:
+                - .env
+          EOF
+
+          echo "📥 Descargando imágenes de Docker..."
+          docker pull ${{ secrets.DOCKER_USERNAME }}/created_schedules:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/read_schedules:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/update_schedules:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/delete_schedules:latest
+
+          echo "🚀 Desplegando servicios con Docker Compose..."
+          docker-compose up -d --force-recreate --remove-orphans
+
+          echo "🔍 Verificando contenedores en ejecución..."
+          docker ps
