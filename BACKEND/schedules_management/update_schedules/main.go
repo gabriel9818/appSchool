@@ -30,7 +30,7 @@ func main() {
 	// Iniciar el servidor
 	port := os.Getenv("API_PORT")
 	if port == "" {
-		port = "8083"
+		port = "6003"
 	}
 	log.Printf("Starting server on port %s...", port)
 	log.Fatal(http.ListenAndServe(":"+port, router))
