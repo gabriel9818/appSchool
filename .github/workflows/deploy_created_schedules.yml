@@ -1,0 +1,112 @@
+name: Docker Image CI/CD for Created Schedules Service
+
+on:
+  push:
+    branches:
+      - test
+    paths:
+      - 'BACKEND/schedules_management/created_schedules/**'
+  pull_request:
+    paths:
+      - 'BACKEND/schedules_management/created_schedules/**'
+    branches: ["test", "main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 📥 Paso 1: Checkout del repositorio
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # 🛠️ Paso 2: Verificar estructura del repositorio en GitHub Actions
+    - name: Debug repository structure
+      run: |
+        echo "📂 Listando archivos en el workspace..."
+        ls -R $GITHUB_WORKSPACE
+
+    # 🔑 Paso 3: Login en Docker Hub
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    # 🐳 Paso 4: Construcción de la imagen Docker
+    - name: Build Docker image
+      run: |
+        docker build $GITHUB_WORKSPACE/BACKEND/schedules_management/created_schedules/. \
+          --file $GITHUB_WORKSPACE/BACKEND/schedules_management/created_schedules/dockerfile \
+          --build-arg DB_HOST=${{ secrets.DB_HOST_SCHEDULES }} \
+          --build-arg DB_USER=${{ secrets.DB_USER_SCHEDULES }} \
+          --build-arg DB_PASSWORD=${{ secrets.DB_PASSWORD_SCHEDULES }} \
+          --build-arg DB_NAME=${{ secrets.DB_NAME_SCHEDULES }} \
+          --build-arg SERVER_PORT=${{ secrets.SERVER_PORT_CREATED_SCHEDULES }} \
+          -t ${{ secrets.DOCKER_USERNAME }}/created_schedules:latest
+
+    # 📤 Paso 5: Subir la imagen a Docker Hub
+    - name: Push Docker image to Docker Hub
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/created_schedules:latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    # 📡 Paso 1: Conectar al servidor EC2 usando SSH
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.EC2_HOST_CREATED_SCHEDULES }}
+        username: ec2-user
+        key: ${{ secrets.EC2_SSH_KEY_SCHEDULES }}
+        port: 22
+        script: |
+          echo "🔄 Exportando variables de entorno..."
+          echo "export DB_HOST=${{ secrets.DB_HOST_SCHEDULES }}" >> ~/.bashrc
+          echo "export DB_USER=${{ secrets.DB_USER_SCHEDULES }}" >> ~/.bashrc
+          echo "export DB_PASSWORD=${{ secrets.DB_PASSWORD_SCHEDULES }}" >> ~/.bashrc
+          echo "export DB_NAME=${{ secrets.DB_NAME_SCHEDULES }}" >> ~/.bashrc
+          echo "export SERVER_PORT=${{ secrets.SERVER_PORT_CREATED_SCHEDULES }}" >> ~/.bashrc
+          source ~/.bashrc
+
+          echo "📦 Navegando al directorio del proyecto..."
+          cd ~/appSchedules/BACKEND/schedules_management/created_schedules
+
+          echo "🛠️ Verificando si Docker está instalado..."
+          if ! command -v docker &> /dev/null; then
+            echo "🔧 Instalando Docker en Amazon Linux..."
+            sudo yum update -y
+            sudo yum install -y docker
+            sudo systemctl start docker
+            sudo systemctl enable docker
+            sudo usermod -aG docker ec2-user
+          fi
+
+          echo "🛑 Deteniendo y eliminando contenedor previo..."
+          sudo docker stop created_schedules || true
+          sudo docker rm created_schedules || true
+          
+          echo "⬇️ Descargando la última imagen desde Docker Hub..."
+          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/created_schedules:latest
+          
+          echo "🚀 Ejecutando el nuevo contenedor en el puerto ${{ secrets.SERVER_PORT_CREATED_SCHEDULES }}..."
+          sudo docker run -d \
+            --name created_schedules \
+            -p 6000:6000 \
+            -e DB_HOST=${{ secrets.DB_HOST_SCHEDULES }} \
+            -e DB_USER=${{ secrets.DB_USER_SCHEDULES }} \
+            -e DB_PASSWORD=${{ secrets.DB_PASSWORD_SCHEDULES }} \
+            -e DB_NAME=${{ secrets.DB_NAME_SCHEDULES }} \
+            -e SERVER_PORT=${{ secrets.SERVER_PORT_CREATED_SCHEDULES }} \
+            ${{ secrets.DOCKER_USERNAME }}/created_schedules:latest
+
+          echo "🔍 Verificando si el contenedor está corriendo..."
+          if sudo docker ps -f name=created_schedules | grep created_schedules; then
+            echo "✅ Contenedor 'created_schedules' corriendo correctamente."
+          else
+            echo "❌ Error al iniciar el contenedor. Revisa los logs."
+            exit 1
+          fi
