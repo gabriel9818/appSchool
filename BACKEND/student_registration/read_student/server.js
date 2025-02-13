@@ -36,7 +36,7 @@ app.get("/", () => "Welcome to the Read Students Microservice!");
 // Start the Elysia server
 app.listen(process.env.APP_PORT || 8087);
 
-console.log(`✅ Server running on http://18.210.147.186:${process.env.APP_PORT || 8087}`);
+console.log(`Server running on http://18.210.147.186:${process.env.APP_PORT || 8087}`);
 console.log(`📄 Swagger docs available at http://18.210.147.186:${process.env.APP_PORT || 8087}/swagger`);
 
 // ✅ Corrección de GraphQL Yoga
