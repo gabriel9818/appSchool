@@ -5,7 +5,11 @@ FROM oven/bun:latest
 WORKDIR /app
 
 # Copy package files and install dependencies
-COPY bun.lockb package.json ./
+COPY bun.lockb package.json ./ 
+
+# Set environment variables
+ENV NODE_ENV=production
+
 RUN bun install
 
 # Copy the rest of the application

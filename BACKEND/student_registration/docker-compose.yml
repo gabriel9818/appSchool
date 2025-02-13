@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  created_student:
+    build: ./created_student
+    ports:
+      - "8085:8085"
+    env_file:
+      - ./created_student/.env
+    depends_on:
+      - mysql
+
+  delete_student:
+    build: ./delete_student
+    ports:
+      - "8086:8086"
+    env_file:
+      - ./delete_student/.env
+    depends_on:
+      - mysql
+
+  read_student:
+    build: ./read_student
+    ports:
+      - "8087:8087"
+    env_file:
+      - ./read_student/.env
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: student_db
+      MYSQL_USER: student_user
+      MYSQL_PASSWORD: student_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
