@@ -6,7 +6,12 @@ services:
     container_name: created_grades
     restart: always
     environment:
-      - APP_PORT=2000  # ✅ Se define explícitamente el puerto
+      - APP_PORT=2000
+      - DB_HOST=${{ secrets.DB_HOST }}
+      - DB_PORT=${{ secrets.DB_PORT }}
+      - DB_USER=${{ secrets.DB_USER }}
+      - DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+      - DB_NAME=${{ secrets.DB_NAME }}
     ports:
       - "2000:2000"
     networks:
@@ -18,6 +23,11 @@ services:
     restart: always
     environment:
       - APP_PORT=2001
+      - DB_HOST=${{ secrets.DB_HOST }}
+      - DB_PORT=${{ secrets.DB_PORT }}
+      - DB_USER=${{ secrets.DB_USER }}
+      - DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+      - DB_NAME=${{ secrets.DB_NAME }}
     ports:
       - "2001:2001"
     networks:
@@ -28,7 +38,12 @@ services:
     container_name: update_grades
     restart: always
     environment:
-      - APP_PORT=2003  # ✅ Se elimina `env_file` y se define el puerto directamente
+      - APP_PORT=2003
+      - DB_HOST=${{ secrets.DB_HOST }}
+      - DB_PORT=${{ secrets.DB_PORT }}
+      - DB_USER=${{ secrets.DB_USER }}
+      - DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+      - DB_NAME=${{ secrets.DB_NAME }}
     ports:
       - "2003:2003"
     networks:
@@ -40,6 +55,11 @@ services:
     restart: always
     environment:
       - APP_PORT=2002
+      - DB_HOST=${{ secrets.DB_HOST }}
+      - DB_PORT=${{ secrets.DB_PORT }}
+      - DB_USER=${{ secrets.DB_USER }}
+      - DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+      - DB_NAME=${{ secrets.DB_NAME }}
     ports:
       - "2002:2002"
     networks:

@@ -6,6 +6,6 @@ COPY . .
 
 RUN bun install
 
-EXPOSE 2002
+EXPOSE 2003
 
 CMD ["bun", "run", "index.ts"]
