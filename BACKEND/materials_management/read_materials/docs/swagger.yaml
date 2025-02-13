@@ -16,7 +16,7 @@ definitions:
 host: localhost:8081
 info:
   contact: {}
-  description: API para leer materiales desde la base de datos.
+  description: API for reading materials from the database.
   title: Read Materials API
   version: "1.0"
 paths:
@@ -24,8 +24,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Devuelve una lista de todos los materiales almacenados en la base
-        de datos.
+      description: Returns a list of all materials stored in the database.
       produces:
       - application/json
       responses:
@@ -36,10 +35,10 @@ paths:
               $ref: '#/definitions/models.Material'
             type: array
         "500":
-          description: Error interno del servidor
+          description: Internal server error
           schema:
             type: string
-      summary: Obtiene todos los materiales
+      summary: Gets all materials
       tags:
       - materials
 swagger: "2.0"

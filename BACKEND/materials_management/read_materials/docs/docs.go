@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/materials": {
             "get": {
-                "description": "Devuelve una lista de todos los materiales almacenados en la base de datos.",
+                "description": "Returns a list of all materials stored in the database.",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,7 +27,7 @@ const docTemplate = `{
                 "tags": [
                     "materials"
                 ],
-                "summary": "Obtiene todos los materiales",
+                "summary": "Gets all materials",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -39,7 +39,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Error interno del servidor",
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -79,7 +79,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Read Materials API",
-	Description:      "API para leer materiales desde la base de datos.",
+	Description:      "API for reading materials from the database.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
