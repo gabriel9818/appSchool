@@ -15,7 +15,7 @@ COPY . .
 # Instalar las dependencias de Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Exponer el puerto de la aplicación
+# Exponer el puerto app
 EXPOSE 7000
 
 # Ejecutar la aplicación con Gunicorn y UvicornWorker para producción
