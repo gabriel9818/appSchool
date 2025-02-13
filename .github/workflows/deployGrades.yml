@@ -1,4 +1,4 @@
-name: Docker Image CI/CD for Grades Microservices
+name: Deploy Grade Management to EC2
 
 on:
   push:
@@ -9,35 +9,50 @@ on:
   pull_request:
     paths:
       - 'BACKEND/grade_management/**'
-    branches: ["main"]
+    branches: ["main", "test"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    # 📥 1. Checkout del código
+    # 📥 Paso 1: Checkout del código
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # 🔑 2. Login en Docker Hub
+    # 🔎 Paso 2: Verificar si docker-compose.yml existe
+    - name: Check if docker-compose.yml exists
+      run: |
+        if [ ! -f BACKEND/grade_management/docker-compose.yml ]; then
+          echo "❌ ERROR: docker-compose.yml no encontrado"
+          exit 1
+        else
+          echo "✅ docker-compose.yml encontrado"
+        fi
+
+    # 🔑 Paso 3: Login en Docker Hub
     - name: Log in to Docker Hub
       uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    # 🛠️ 3. Construcción de imágenes Docker
+    # 🐳 Paso 4: Construcción de imágenes Docker
     - name: Build Docker images
       run: |
         for service in created_grades read_grades update_grades delete_grades; do
           echo "🚀 Construyendo imagen para $service..."
           docker build $GITHUB_WORKSPACE/BACKEND/grade_management/$service/. \
             --file $GITHUB_WORKSPACE/BACKEND/grade_management/$service/dockerfile \
+            --build-arg DB_HOST=${{ secrets.DB_HOST_GRADES }} \
+            --build-arg DB_USER=${{ secrets.DB_USER_GRADES }} \
+            --build-arg DB_PASSWORD=${{ secrets.DB_PASSWORD_GRADES }} \
+            --build-arg DB_NAME=${{ secrets.DB_NAME_GRADES }} \
+            --build-arg DB_PORT=5432 \
             -t ${{ secrets.DOCKER_USERNAME }}/$service:latest
         done
 
-    # 📤 4. Subir imágenes a Docker Hub
+    # 📤 Paso 5: Subir imágenes a Docker Hub
     - name: Push Docker images to Docker Hub
       run: |
         for service in created_grades read_grades update_grades delete_grades; do
@@ -50,17 +65,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 📡 5. Copiar `docker-compose.yml` a EC2
-    - name: Copy docker-compose.yml to EC2
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.EC2_HOST_GRADES }}
-        username: ec2-user
-        key: ${{ secrets.EC2_SSH_KEY_GRADES }}
-        source: "BACKEND/grade_management/docker-compose.yml"
-        target: "~/appGrades/BACKEND/grade_management/"
-
-    # 📡 6. Desplegar en EC2
+    # 📡 Paso 1: Conectar a EC2 y desplegar
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.8
       with:
@@ -79,6 +84,7 @@ jobs:
           DB_HOST=${{ secrets.DB_HOST_GRADES }}
           DB_PORT=5432
           DB_NAME=${{ secrets.DB_NAME_GRADES }}
+          APP_PORT=2000
           EOF
 
           echo "📦 Verificando contenido del .env..."
@@ -99,7 +105,7 @@ jobs:
           fi
 
           echo "🛑 Deteniendo contenedores antiguos..."
-          sudo docker-compose -f ~/appGrades/BACKEND/grade_management/docker-compose.yml down
+          sudo docker-compose -f ~/appGrades/BACKEND/grade_management/docker-compose.yml down || true
 
           echo "⬇️ Descargando últimas imágenes..."
           for service in created_grades read_grades update_grades delete_grades; do

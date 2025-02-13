@@ -4,7 +4,7 @@ import gradeRoutes from "./routes/gradeRoutes"; // Sin extensión `.js`
 const app = express();
 app.use(express.json());
 
-app.use("/api/v1", gradeRoutes); // Ruta principal
+app.use("/api/v1", gradeRoutes); // Ruta principal s
 
 const PORT = process.env.APP_PORT || 2001;
 app.listen(PORT, () => {
