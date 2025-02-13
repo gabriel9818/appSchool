@@ -6,7 +6,7 @@ app.use(express.json());
 
 app.use("/api/v1", gradeRoutes); // Ruta principal
 
-const PORT = process.env.APP_PORT || 3000;
+const PORT = process.env.APP_PORT || 3001;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

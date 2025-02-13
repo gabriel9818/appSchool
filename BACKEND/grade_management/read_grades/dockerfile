@@ -11,7 +11,7 @@ COPY . .
 RUN bun install
 
 # Expone el puerto de la API
-EXPOSE 3000
+EXPOSE 3001
 
 # Comando para iniciar el servicio
 CMD ["bun", "run", "dev"]
