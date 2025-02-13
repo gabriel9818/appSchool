@@ -8,4 +8,4 @@ RUN bun install
 
 EXPOSE 2003
 
-CMD ["bun", "run", "index.ts"]
+CMD ["bun", "run", "main.ts"]

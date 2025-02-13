@@ -5,8 +5,8 @@ services:
     image: ${{ secrets.DOCKER_USERNAME }}/created_grades:latest
     container_name: created_grades
     restart: always
-    env_file:
-      - .env
+    environment:
+      - APP_PORT=2000  # ✅ Se define explícitamente el puerto
     ports:
       - "2000:2000"
     networks:
@@ -16,8 +16,8 @@ services:
     image: ${{ secrets.DOCKER_USERNAME }}/read_grades:latest
     container_name: read_grades
     restart: always
-    env_file:
-      - .env
+    environment:
+      - APP_PORT=2001
     ports:
       - "2001:2001"
     networks:
@@ -27,10 +27,10 @@ services:
     image: ${{ secrets.DOCKER_USERNAME }}/update_grades:latest
     container_name: update_grades
     restart: always
-    env_file:
-      - .env
+    environment:
+      - APP_PORT=2003  # ✅ Se elimina `env_file` y se define el puerto directamente
     ports:
-      - "2002:2002"
+      - "2003:2003"
     networks:
       - grades_network
 
@@ -38,10 +38,10 @@ services:
     image: ${{ secrets.DOCKER_USERNAME }}/delete_grades:latest
     container_name: delete_grades
     restart: always
-    env_file:
-      - .env
+    environment:
+      - APP_PORT=2002
     ports:
-      - "2003:2003"
+      - "2002:2002"
     networks:
       - grades_network
 
