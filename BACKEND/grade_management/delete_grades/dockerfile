@@ -11,7 +11,7 @@ COPY . .
 RUN bun install
 
 # Exponer el puerto
-EXPOSE 3000
+EXPOSE 2002
 
 # Iniciar servidor
 CMD ["bun", "run", "main.ts"]

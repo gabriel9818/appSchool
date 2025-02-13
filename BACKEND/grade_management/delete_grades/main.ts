@@ -9,7 +9,7 @@ app.use(express.json());
 
 app.use("/api/v1", gradeRoutes);
 
-const PORT = process.env.APP_PORT || 3000;
+const PORT = process.env.APP_PORT || 2002;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
