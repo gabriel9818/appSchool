@@ -25,35 +25,34 @@ jobs:
         script: |
           echo "✅ Conexión establecida con EC2"
 
-          echo "🛠️ Verificando si Docker y Docker Compose están instalados..."
+          echo "🛠️ Instalando Docker y Docker Compose..."
           if ! command -v docker &> /dev/null; then
-            echo "🔧 Instalando Docker..."
-            sudo amazon-linux-extras enable docker
-            sudo yum install -y docker
+            sudo dnf update -y
+            sudo dnf install -y docker
             sudo systemctl start docker
             sudo systemctl enable docker
             sudo usermod -aG docker ec2-user
-            newgrp docker
+            sudo systemctl restart docker
           fi
 
           if ! command -v docker-compose &> /dev/null; then
             echo "🔧 Instalando Docker Compose..."
-            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
             sudo chmod +x /usr/local/bin/docker-compose
           fi
 
           echo "🔑 Iniciando sesión en Docker Hub..."
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
           echo "🛑 Eliminando contenedores e imágenes antiguas..."
-          docker stop $(docker ps -aq) || true
-          docker rm $(docker ps -aq) || true
-          docker rmi -f ${{ secrets.DOCKER_USERNAME }}/created_student_registration:latest || true
-          docker rmi -f ${{ secrets.DOCKER_USERNAME }}/delete_student_registration:latest || true
-          docker rmi -f ${{ secrets.DOCKER_USERNAME }}/read_student_registration:latest || true
-          docker rmi -f ${{ secrets.DOCKER_USERNAME }}/update_student_registration:latest || true
-          docker network prune -f || true
-          docker volume prune -f || true
+          sudo docker stop $(sudo docker ps -aq) || true
+          sudo docker rm $(sudo docker ps -aq) || true
+          sudo docker rmi -f ${{ secrets.DOCKER_USERNAME }}/created_student_registration:latest || true
+          sudo docker rmi -f ${{ secrets.DOCKER_USERNAME }}/delete_student_registration:latest || true
+          sudo docker rmi -f ${{ secrets.DOCKER_USERNAME }}/read_student_registration:latest || true
+          sudo docker rmi -f ${{ secrets.DOCKER_USERNAME }}/update_student_registration:latest || true
+          sudo docker network prune -f || true
+          sudo docker volume prune -f || true
 
           echo "📦 Moviéndonos al directorio del proyecto..."
           cd ~/appStudent/BACKEND/student_registration || mkdir -p ~/appStudent/BACKEND/student_registration && cd ~/appStudent/BACKEND/student_registration
@@ -124,13 +123,13 @@ jobs:
           cat ~/appStudent/BACKEND/student_registration/docker-compose.yml
 
           echo "📥 Descargando imágenes de Docker..."
-          docker pull ${{ secrets.DOCKER_USERNAME }}/created_student_registration:latest
-          docker pull ${{ secrets.DOCKER_USERNAME }}/delete_student_registration:latest
-          docker pull ${{ secrets.DOCKER_USERNAME }}/read_student_registration:latest
-          docker pull ${{ secrets.DOCKER_USERNAME }}/update_student_registration:latest
+          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/created_student_registration:latest
+          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/delete_student_registration:latest
+          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/read_student_registration:latest
+          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/update_student_registration:latest
 
           echo "🚀 Desplegando servicios con Docker Compose..."
-          docker-compose up -d --force-recreate --remove-orphans
+          sudo docker-compose up -d --force-recreate --remove-orphans
 
           echo "🔍 Verificando contenedores en ejecución..."
-          docker ps
+          sudo docker ps
