@@ -1,17 +1,17 @@
-# Imagen base de Bun
-FROM oven/bun:latest
+# Usa la imagen oficial de Bun
+FROM oven/bun:alpine
 
-# Crear directorio de trabajo
+# Establece el directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos
+# Copia los archivos necesarios
 COPY . .
 
-# Instalar dependencias
+# Instala dependencias
 RUN bun install
 
 # Exponer el puerto de la aplicación
 EXPOSE 2000
 
-# Comando para correr la aplicación
+# Comando para iniciar el servicio
 CMD ["bun", "run", "index.ts"]

@@ -1,20 +1,11 @@
-# Usa la imagen base oficial de Node.js (o Bun si prefieres)
-FROM node:18
+FROM oven/bun:alpine
 
-# Establece el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Copia los archivos de configuración
-COPY package.json bun.lock tsconfig.json ./
-
-# Instala las dependencias
-RUN npm install
-
-# Copia el resto de los archivos
 COPY . .
 
-# Expone el puerto en el que se ejecutará la aplicación
+RUN bun install
+
 EXPOSE 2003
 
-# Comando para iniciar la aplicación
-CMD ["npm", "run", "dev"]
+CMD ["bun", "run", "index.ts"]

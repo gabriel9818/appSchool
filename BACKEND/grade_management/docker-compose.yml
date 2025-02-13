@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  created_grades:
+    image: ${{ secrets.DOCKER_USERNAME }}/created_grades:latest
+    container_name: created_grades
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "2000:2000"
+    networks:
+      - grades_network
+
+  read_grades:
+    image: ${{ secrets.DOCKER_USERNAME }}/read_grades:latest
+    container_name: read_grades
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "2001:2001"
+    networks:
+      - grades_network
+
+  update_grades:
+    image: ${{ secrets.DOCKER_USERNAME }}/update_grades:latest
+    container_name: update_grades
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "2003:2003"
+    networks:
+      - grades_network
+
+  delete_grades:
+    image: ${{ secrets.DOCKER_USERNAME }}/delete_grades:latest
+    container_name: delete_grades
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "2002:2002"
+    networks:
+      - grades_network
+
+networks:
+  grades_network:
+    driver: bridge

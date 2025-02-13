@@ -1,17 +1,11 @@
-# Imagen base
-FROM oven/bun:1.0
+FROM oven/bun:alpine
 
-# Definir directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos
 COPY . .
 
-# Instalar dependencias
 RUN bun install
 
-# Exponer el puerto
 EXPOSE 2002
 
-# Iniciar servidor
-CMD ["bun", "run", "main.ts"]
+CMD ["bun", "run", "index.ts"]
