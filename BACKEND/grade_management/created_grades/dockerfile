@@ -10,7 +10,7 @@ COPY . .
 # Instala dependencias
 RUN bun install
 
-# Exponer el puerto de la app
+# Exponer el puerto de la appl
 EXPOSE 2000
 
 # Comando para iniciar el servicio
