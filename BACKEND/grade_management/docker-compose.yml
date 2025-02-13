@@ -30,7 +30,7 @@ services:
     env_file:
       - .env
     ports:
-      - "2003:2003"
+      - "2002:2002"
     networks:
       - grades_network
 
@@ -41,7 +41,7 @@ services:
     env_file:
       - .env
     ports:
-      - "2002:2002"
+      - "2003:2003"
     networks:
       - grades_network
 
