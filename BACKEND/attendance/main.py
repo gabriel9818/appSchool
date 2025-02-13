@@ -3,7 +3,7 @@ import requests
 from database import get_db_connection
 
 # URL del microservicio `student_registration`
-GRAPHQL_URL = "http://localhost:4000/graphql"
+GRAPHQL_URL = "http://18.210.147.186:4000/graphql"
 
 app = FastAPI()
 
