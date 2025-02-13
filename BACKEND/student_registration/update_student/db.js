@@ -1,7 +1,7 @@
 import mysql from "mysql2/promise";
 import dotenv from "dotenv";
 
-// Load environment variables a
+// Load environment variables 
 dotenv.config();
 
 // Create database connection

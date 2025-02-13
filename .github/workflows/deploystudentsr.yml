@@ -123,10 +123,10 @@ jobs:
           cat ~/appStudent/BACKEND/student_registration/docker-compose.yml
 
           echo "📥 Descargando imágenes de Docker..."
-          docker pull ${{ secrets.DOCKER_USERNAME_GT }}/created_student_registration:latest
-          docker pull ${{ secrets.DOCKER_USERNAME_GT }}/delete_student_registration:latest
-          docker pull ${{ secrets.DOCKER_USERNAME_GT }}/read_student_registration:latest
-          docker pull ${{ secrets.DOCKER_USERNAME_GT }}/update_student_registration:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/created_student_registration:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/delete_student_registration:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/read_student_registration:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/update_student_registration:latest
 
           echo "🚀 Desplegando servicios con Docker Compose..."
           docker-compose up -d --force-recreate --remove-orphans
