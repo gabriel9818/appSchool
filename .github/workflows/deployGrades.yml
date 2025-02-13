@@ -63,7 +63,7 @@ jobs:
           DB_USER=${{ secrets.DB_USER_GRADES }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD_GRADES }}
           DB_NAME=${{ secrets.DB_NAME_GRADES }}
-          DB_SSL=false
+          DB_SSL=true
           EOF
 
           echo "✅ Archivo .env creado con éxito:"
