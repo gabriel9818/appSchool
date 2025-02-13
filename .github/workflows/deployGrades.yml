@@ -1,4 +1,4 @@
-name: Deploy Grade Management Services to AWS
+name: Deploy Grade Management to EC2
 
 on:
   push:
@@ -6,16 +6,77 @@ on:
       - test
     paths:
       - 'BACKEND/grade_management/**'
+  pull_request:
+    paths:
+      - 'BACKEND/grade_management/**'
+    branches: ["main", "test"]
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: 🚀 Checkout del código
+    # 📥 Paso 1: Checkout del código
+    - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: 🔑 Acceder al servidor EC2 y desplegar
+    # 🔎 Paso 2: Verificar si docker-compose.yml existe
+    - name: Check if docker-compose.yml exists
+      run: |
+        if [ ! -f BACKEND/grade_management/docker-compose.yml ]; then
+          echo "❌ ERROR: docker-compose.yml no encontrado"
+          exit 1
+        else
+          echo "✅ docker-compose.yml encontrado"
+        fi
+
+    # 🔑 Paso 3: Login en Docker Hub
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    # 🐳 Paso 4: Construcción de imágenes Docker
+    - name: Build Docker images
+      run: |
+        for service in created_grades read_grades update_grades delete_grades; do
+          echo "🚀 Construyendo imagen para $service..."
+          docker build $GITHUB_WORKSPACE/BACKEND/grade_management/$service/. \
+            --file $GITHUB_WORKSPACE/BACKEND/grade_management/$service/dockerfile \
+            --build-arg DB_HOST=${{ secrets.DB_HOST_GRADES }} \
+            --build-arg DB_USER=${{ secrets.DB_USER_GRADES }} \
+            --build-arg DB_PASSWORD=${{ secrets.DB_PASSWORD_GRADES }} \
+            --build-arg DB_NAME=${{ secrets.DB_NAME_GRADES }} \
+            --build-arg DB_PORT=5432 \
+            -t ${{ secrets.DOCKER_USERNAME }}/$service:latest
+        done
+
+    # 📤 Paso 5: Subir imágenes a Docker Hub
+    - name: Push Docker images to Docker Hub
+      run: |
+        for service in created_grades read_grades update_grades delete_grades; do
+          echo "📤 Subiendo imagen para $service..."
+          docker push ${{ secrets.DOCKER_USERNAME }}/$service:latest
+        done
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    # 📡 Paso 1: Copiar `docker-compose.yml` a EC2
+    - name: Copy docker-compose.yml to EC2
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.EC2_HOST_GRADES }}
+        username: ec2-user
+        key: ${{ secrets.EC2_SSH_KEY_GRADES }}
+        source: "BACKEND/grade_management/docker-compose.yml"
+        target: "~/appGrades/BACKEND/grade_management/"
+
+    # 📡 Paso 2: Conectar a EC2 y desplegar
+    - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.8
       with:
         host: ${{ secrets.EC2_HOST_GRADES }}
@@ -23,98 +84,47 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY_GRADES }}
         port: 22
         script: |
-          echo "✅ Conexión establecida con EC2"
+          echo "🔄 Creando directorio en EC2..."
+          mkdir -p ~/appGrades/BACKEND/grade_management
 
-          echo "🛠️ Verificando si Docker y Docker Compose están instalados..."
+          echo "📝 Creando archivo .env global..."
+          cat <<EOF > ~/appGrades/BACKEND/grade_management/.env
+          DB_USER=${{ secrets.DB_USER_GRADES }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD_GRADES }}
+          DB_HOST=${{ secrets.DB_HOST_GRADES }}
+          DB_PORT=5432
+          DB_NAME=${{ secrets.DB_NAME_GRADES }}
+          APP_PORT=2000
+          EOF
+
+          echo "📦 Verificando contenido del .env..."
+          cat ~/appGrades/BACKEND/grade_management/.env
+
+          echo "🛠️ Instalando Docker en Amazon Linux 2023..."
           if ! command -v docker &> /dev/null; then
-            echo "🔧 Instalando Docker..."
             sudo dnf install -y docker
             sudo systemctl start docker
             sudo systemctl enable docker
             sudo usermod -aG docker ec2-user
           fi
 
+          echo "🛠️ Instalando Docker Compose..."
           if ! command -v docker-compose &> /dev/null; then
-            echo "🔧 Instalando Docker Compose..."
             sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
             sudo chmod +x /usr/local/bin/docker-compose
           fi
 
-          echo "🔑 Iniciando sesión en Docker Hub..."
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          echo "🛑 Deteniendo contenedores antiguos..."
+          sudo docker-compose -f ~/appGrades/BACKEND/grade_management/docker-compose.yml down || true
 
-          echo "🛑 Eliminando contenedores e imágenes en conflicto..."
-          docker stop $(docker ps -aq) || true
-          docker rm $(docker ps -aq) || true
-          docker rmi -f ${{ secrets.DOCKER_USERNAME }}/created_grades:latest || true
-          docker rmi -f ${{ secrets.DOCKER_USERNAME }}/delete_grades:latest || true
-          docker rmi -f ${{ secrets.DOCKER_USERNAME }}/read_grades:latest || true
-          docker rmi -f ${{ secrets.DOCKER_USERNAME }}/update_grades:latest || true
-          docker network prune -f || true
-          docker volume prune -f || true
+          echo "⬇️ Descargando últimas imágenes..."
+          for service in created_grades read_grades update_grades delete_grades; do
+            echo "📥 Descargando imagen para $service..."
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/$service:latest
+          done
 
-          echo "📦 Moviéndonos al directorio del proyecto..."
-          cd ~/appGrades/BACKEND/grade_management || mkdir -p ~/appGrades/BACKEND/grade_management && cd ~/appGrades/BACKEND/grade_management
+          echo "🚀 Levantando los contenedores con Docker Compose..."
+          sudo docker-compose -f ~/appGrades/BACKEND/grade_management/docker-compose.yml up -d
 
-          echo "📂 Creando archivo .env..."
-          cat <<EOF > .env
-          DB_HOST=${{ secrets.DB_HOST_GRADES }}
-          DB_PORT=5432
-          DB_USER=${{ secrets.DB_USER_GRADES }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD_GRADES }}
-          DB_NAME=${{ secrets.DB_NAME_GRADES }}
-          APP_PORT=2000
-          EOF
-
-          echo "⬇️ Creando nuevo docker-compose.yml..."
-          cat <<EOF > docker-compose.yml
-          version: '3.8'
-          services:
-            created_grades:
-              image: ${{ secrets.DOCKER_USERNAME }}/created_grades:latest
-              container_name: created_grades
-              restart: always
-              ports:
-                - "2000:2000"
-              env_file:
-                - .env
-
-            delete_grades:
-              image: ${{ secrets.DOCKER_USERNAME }}/delete_grades:latest
-              container_name: delete_grades
-              restart: always
-              ports:
-                - "2003:2003"
-              env_file:
-                - .env
-
-            read_grades:
-              image: ${{ secrets.DOCKER_USERNAME }}/read_grades:latest
-              container_name: read_grades
-              restart: always
-              ports:
-                - "2001:2001"
-              env_file:
-                - .env
-
-            update_grades:
-              image: ${{ secrets.DOCKER_USERNAME }}/update_grades:latest
-              container_name: update_grades
-              restart: always
-              ports:
-                - "2002:2002"
-              env_file:
-                - .env
-          EOF
-
-          echo "📥 Descargando imágenes de Docker..."
-          docker pull ${{ secrets.DOCKER_USERNAME }}/created_grades:latest
-          docker pull ${{ secrets.DOCKER_USERNAME }}/delete_grades:latest
-          docker pull ${{ secrets.DOCKER_USERNAME }}/read_grades:latest
-          docker pull ${{ secrets.DOCKER_USERNAME }}/update_grades:latest
-
-          echo "🚀 Desplegando servicios con Docker Compose..."
-          docker-compose up -d --force-recreate --remove-orphans
-
-          echo "🔍 Verificando contenedores en ejecución..."
-          docker ps
+          echo "🔍 Verificando contenedores..."
+          sudo docker ps
