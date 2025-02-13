@@ -1,20 +1,20 @@
 # 🎯 Attendance Microservice
 
-Este es el microservicio de **asistencia (`attendance`)**, que gestiona los registros de asistencia de estudiantes y se integra con el microservicio `student_registration` a través de GraphQL.
+The **`attendance` microservice** manages student attendance records and integrates with the `student_registration` microservice via GraphQL.
 
-## 📌 Tecnologías Utilizadas
+## 📌 Technologies Used
 - **Python 3.11**
-- **FastAPI** (para la API REST)
-- **Uvicorn** (servidor ASGI)
-- **PostgreSQL** (base de datos)
-- **Requests** (para consumir GraphQL de `student_registration`)
-- **Docker** (para contenerización)
+- **FastAPI** (for REST API)
+- **Uvicorn** (ASGI server)
+- **PostgreSQL** (database)
+- **Requests** (to consume GraphQL from `student_registration`)
+- **Docker** (for containerization)
 
 ---
 
-## 🚀 Instalación y Ejecución Local
+## 🚀 Installation and Local Execution
 
-### 1️⃣ **Clonar el Repositorio**
+### 1️⃣ **Clone the Repository**
 ```bash
-git clone https://github.com/tu-usuario/appSchool.git
+git clone https://github.com/your-username/appSchool.git
 cd BACKEND/attendance
