@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	"created_schedules/db"
-	"created_schedules/routes"
+	"read_schedules/db"
+	"read_schedules/routes"
 
 	"github.com/joho/godotenv"
 )
