@@ -63,7 +63,7 @@ def register_attendance(student_id: int, status: str):
     # Consultar microservicio `student_registration`
     student = get_student_by_id(student_id)
     if not student:
-        raise HTTPException(status_code=404, detail="Student a not found")
+        raise HTTPException(status_code=404, detail="Student not found")
 
     cursor.execute(
         "INSERT INTO attendance (student_id, date, status) VALUES (%s, NOW(), %s) RETURNING id, student_id, date, status",

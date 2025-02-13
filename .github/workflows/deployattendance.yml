@@ -15,23 +15,6 @@ jobs:
     - name: 🚀 Checkout del código
       uses: actions/checkout@v3
 
-    - name: 🛠️ Instalar Docker CLI
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y docker.io
-
-    - name: 🔄 Construir imagen de Docker
-      run: |
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/attendance:latest BACKEND/attendance/
-
-    - name: 🔑 Iniciar sesión en Docker Hub
-      run: |
-        echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-    - name: 🚀 Subir imagen a Docker Hub
-      run: |
-        docker push ${{ secrets.DOCKER_USERNAME }}/attendance:latest
-
     - name: 🔑 Acceder a EC2 y desplegar
       uses: appleboy/ssh-action@v0.1.8
       with:
@@ -42,21 +25,33 @@ jobs:
         script: |
           echo "✅ Conexión establecida con EC2"
 
-          echo "🛠️ Instalando Docker en Amazon Linux..."
-          if ! command -v docker &> /dev/null; then
-            sudo yum update -y
-            sudo yum install -y docker
-            sudo systemctl start docker
-            sudo systemctl enable docker
-            sudo usermod -aG docker ec2-user
-            newgrp docker
-          fi
+          echo "🛠️ Eliminando versiones antiguas en conflicto..."
+          sudo apt-get remove -y containerd.io containerd docker docker-engine docker.io docker-ce docker-ce-cli || true
+          sudo apt-get autoremove -y
+          sudo apt-get update -y
 
-          if ! command -v docker-compose &> /dev/null; then
-            echo "🔧 Instalando Docker Compose..."
-            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
-            sudo chmod +x /usr/local/bin/docker-compose
-          fi
+          echo "🔧 Instalando dependencias necesarias..."
+          sudo apt-get install -y \
+            ca-certificates \
+            curl \
+            gnupg
+
+          echo "📌 Agregando clave GPG de Docker..."
+          sudo install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo tee /etc/apt/keyrings/docker.asc > /dev/null
+          sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+          echo "📦 Agregando repositorio oficial de Docker..."
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+          sudo apt-get update -y
+
+          echo "🚀 Instalando Docker sin conflictos..."
+          sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+          echo "🔄 Habilitando y verificando Docker..."
+          sudo systemctl enable docker
+          sudo systemctl start docker
+          sudo systemctl status docker --no-pager
 
           echo "🔑 Iniciando sesión en Docker Hub..."
           echo "${{ secrets.DOCKER_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
@@ -66,4 +61,27 @@ jobs:
           sudo docker rm attendance_service || true
           sudo docker rmi -f ${{ secrets.DOCKER_USERNAME }}/attendance:latest || true
           sudo docker network prune -f || true
-          sudo docker volume prune -f ||
+          sudo docker volume prune -f || true
+
+          echo "📥 Descargando nueva imagen de Docker..."
+          sudo docker pull --no-cache ${{ secrets.DOCKER_USERNAME }}/attendance:latest
+
+          echo "⬇️ Creando archivo docker-compose.yml..."
+          cat <<EOF > docker-compose.yml
+          version: '3.8'
+          services:
+            attendance_service:
+              image: ${{ secrets.DOCKER_USERNAME }}/attendance:latest
+              container_name: attendance_service
+              restart: always
+              ports:
+                - "7000:7000"
+              env_file:
+                - .env
+          EOF
+
+          echo "🚀 Ejecutando servicio con Docker Compose..."
+          sudo docker-compose up -d --force-recreate --build
+
+          echo "🔍 Verificando contenedores en ejecución..."
+          sudo docker ps
