@@ -2,6 +2,11 @@ import { Elysia } from "elysia";
 import dotenv from "dotenv";
 import studentRoutes from "./routes/studentRoutes.js";
 import { swagger } from "@elysiajs/swagger";
+import { createServer } from "http";
+import { createYoga } from "graphql-yoga";
+import { makeExecutableSchema } from "@graphql-tools/schema"; // ✅ Se agrega para corregir el error
+import { typeDefs } from "./graphql/schema.js";
+import resolvers from "./graphql/resolvers.js";
 
 // Load environment variables
 dotenv.config();
@@ -28,8 +33,19 @@ studentRoutes(app);
 // Root endpoint
 app.get("/", () => "Welcome to the Read Students Microservice!");
 
-// Start the server
+// Start the Elysia server
 app.listen(process.env.APP_PORT || 8087);
 
 console.log(`✅ Server running on http://localhost:${process.env.APP_PORT || 8087}`);
 console.log(`📄 Swagger docs available at http://localhost:${process.env.APP_PORT || 8087}/swagger`);
+
+// ✅ Corrección de GraphQL Yoga
+const schema = makeExecutableSchema({ typeDefs, resolvers }); // Se usa makeExecutableSchema para evitar errores
+
+const yoga = createYoga({ schema });
+
+const server = createServer(yoga);
+
+server.listen(4000, () => {
+  console.log("✅ GraphQL server running at http://localhost:4000/graphql");
+});
