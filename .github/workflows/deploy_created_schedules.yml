@@ -64,16 +64,21 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY_SCHEDULES }}
         port: 22
         script: |
-          echo "🔄 Exportando variables de entorno..."
-          echo "export DB_HOST=${{ secrets.DB_HOST_SCHEDULES }}" >> ~/.bashrc
-          echo "export DB_USER=${{ secrets.DB_USER_SCHEDULES }}" >> ~/.bashrc
-          echo "export DB_PASSWORD=${{ secrets.DB_PASSWORD_SCHEDULES }}" >> ~/.bashrc
-          echo "export DB_NAME=${{ secrets.DB_NAME_SCHEDULES }}" >> ~/.bashrc
-          echo "export SERVER_PORT=${{ secrets.SERVER_PORT_CREATED_SCHEDULES }}" >> ~/.bashrc
-          source ~/.bashrc
+          echo "🔄 Verificando y creando directorio..."
+          mkdir -p ~/appSchedules/BACKEND/schedules_management/created_schedules
 
-          echo "📦 Navegando al directorio del proyecto..."
-          cd ~/appSchedules/BACKEND/schedules_management/created_schedules
+          echo "📝 Creando archivo .env..."
+          cat <<EOF > ~/appSchedules/BACKEND/schedules_management/created_schedules/.env
+          API_PORT=6000
+          DB_USER=${{ secrets.DB_USER_SCHEDULES }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD_SCHEDULES }}
+          DB_HOST=${{ secrets.DB_HOST_SCHEDULES }}
+          DB_PORT=3306
+          DB_NAME=${{ secrets.DB_NAME_SCHEDULES }}
+          EOF
+
+          echo "📦 Verificando contenido del .env..."
+          cat ~/appSchedules/BACKEND/schedules_management/created_schedules/.env
 
           echo "🛠️ Verificando si Docker está instalado..."
           if ! command -v docker &> /dev/null; then
@@ -96,11 +101,7 @@ jobs:
           sudo docker run -d \
             --name created_schedules \
             -p 6000:6000 \
-            -e DB_HOST=${{ secrets.DB_HOST_SCHEDULES }} \
-            -e DB_USER=${{ secrets.DB_USER_SCHEDULES }} \
-            -e DB_PASSWORD=${{ secrets.DB_PASSWORD_SCHEDULES }} \
-            -e DB_NAME=${{ secrets.DB_NAME_SCHEDULES }} \
-            -e SERVER_PORT=${{ secrets.SERVER_PORT_CREATED_SCHEDULES }} \
+            --env-file ~/appSchedules/BACKEND/schedules_management/created_schedules/.env \
             ${{ secrets.DOCKER_USERNAME }}/created_schedules:latest
 
           echo "🔍 Verificando si el contenedor está corriendo..."
