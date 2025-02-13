@@ -12,10 +12,13 @@ import (
 )
 
 func main() {
-	// Cargar variables de entorno go
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	// Si las variables de entorno ya están definidas, omitir cargar `.env`
+	if os.Getenv("DB_HOST") == "" {
+		log.Println("No environment variables found, loading .env file...")
+		err := godotenv.Load(".env")
+		if err != nil {
+			log.Fatal("Error loading .env file:", err)
+		}
 	}
 
 	// Conexión a la base de datos
@@ -24,7 +27,7 @@ func main() {
 	// Configurar rutas
 	router := routes.SetupRoutes()
 
-	// Iniciar servidor
+	// Iniciar el servidor
 	port := os.Getenv("API_PORT")
 	if port == "" {
 		port = "8083"

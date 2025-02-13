@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  created_schedules:
+    image: ${{ secrets.DOCKER_USERNAME }}/created_schedules:latest
+    container_name: created_schedules
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "6000:6000"
+
+  read_schedules:
+    image: ${{ secrets.DOCKER_USERNAME }}/read_schedules:latest
+    container_name: read_schedules
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "6001:6001"
+
+  update_schedules:
+    image: ${{ secrets.DOCKER_USERNAME }}/update_schedules:latest
+    container_name: update_schedules
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "6002:6002"
+
+  delete_schedules:
+    image: ${{ secrets.DOCKER_USERNAME }}/delete_schedules:latest
+    container_name: delete_schedules
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "6003:6003"
