@@ -4,6 +4,13 @@ const { User } = require('../models');
 const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
+
+    // 🔹 Verifica si el modelo User está definido
+    if (!User) {
+      console.error("❌ Error: El modelo User no está definido.");
+      return res.status(500).json({ error: "El modelo User no está disponible" });
+    }
+
     const user = await User.findByPk(id);
 
     if (!user) {

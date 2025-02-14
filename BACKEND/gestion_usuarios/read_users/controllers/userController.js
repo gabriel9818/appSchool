@@ -1,47 +1,35 @@
 const { User } = require('../models');
 
-// 🔹 Obtener usuario por ID
-const getUserById = async (req, res) => {
+const getAllUsers = async (req, res) => {
   try {
-    const { id } = req.params;
+    const users = await User.findAll();
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
-    // 🔹 Verifica si el modelo User está definido
-    if (!User) {
-      console.error("❌ Error: El modelo User no está definido.");
-      return res.status(500).json({ error: "El modelo User no está disponible" });
-    }
+const getUserByEmail = async (req, res) => {
+  try {
+    const { email } = req.params;
+    console.log(`🔹 Buscando usuario con email: ${email}`);
 
-    const user = await User.findByPk(id);
+    const user = await User.findOne({ 
+      where: { email },
+      attributes: ['id', 'nombre', 'email', 'password', 'rol'] // 🔹 Asegurar que la consulta incluya password
+    });
 
     if (!user) {
-      return res.status(404).json({ error: "Usuario no encontrado" });
+      console.log("❌ Usuario no encontrado");
+      return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
+    console.log(`✅ Usuario encontrado: ${user.email}`);
     res.status(200).json(user);
   } catch (error) {
-    console.error("Error al obtener usuario:", error);
-    res.status(500).json({ error: "Error interno del servidor" });
+    console.error("❌ Error al buscar usuario:", error.message);
+    res.status(500).json({ error: error.message });
   }
 };
 
-// 🔹 Actualizar usuario por ID
-const updateUserById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { nombre, email, password, rol } = req.body;
-
-    const user = await User.findByPk(id);
-    if (!user) {
-      return res.status(404).json({ error: "Usuario no encontrado" });
-    }
-
-    await user.update({ nombre, email, password, rol });
-
-    res.status(200).json({ message: "Usuario actualizado correctamente" });
-  } catch (error) {
-    console.error("Error al actualizar usuario:", error);
-    res.status(500).json({ error: "Error interno del servidor" });
-  }
-};
-
-module.exports = { getUserById, updateUserById };
+module.exports = { getAllUsers, getUserByEmail }; // 🔹 Exportación corregida
