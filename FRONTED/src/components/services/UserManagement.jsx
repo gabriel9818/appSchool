@@ -36,27 +36,7 @@ const UserManagement = () => {
     }
   };
 
-  // 🔹 Función para eliminar usuario
-  const deleteUser = async (id) => {
-    if (!window.confirm("¿Estás seguro de eliminar este usuario?")) return;
-
-    try {
-      const response = await fetch(`http://98.85.176.95:3004/api/delete/${id}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        alert("✅ Usuario eliminado correctamente");
-        fetchUsers(); // Recargar la lista de usuarios después de eliminar
-      } else {
-        console.error("Error al eliminar usuario");
-      }
-    } catch (error) {
-      console.error("❌ Error de conexión con el servidor:", error);
-    }
-  };
-
-  // 🔹 Función para navegar a la página de edición
+  // Función para navegar a la página de edición
   const editUser = (id) => {
     navigate(`/edit-user/${id}`);
   };
@@ -106,7 +86,7 @@ const UserManagement = () => {
                   <button className="edit-btn" onClick={() => editUser(user.id)}>
                     <FaEdit />
                   </button>
-                  <button className="delete-btn" onClick={() => deleteUser(user.id)}>
+                  <button className="delete-btn">
                     <FaTrash />
                   </button>
                 </td>
