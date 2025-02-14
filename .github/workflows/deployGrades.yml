@@ -6,6 +6,10 @@ on:
       - test
     paths:
       - 'BACKEND/grade_management/**'
+  pull_request:
+    paths:
+      - 'BACKEND/grade_management/**'
+    branches: ["test", "main"]
 
 jobs:
   deploy:
