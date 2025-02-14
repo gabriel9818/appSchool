@@ -3,24 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Profesores</title>
+    <title>Eliminar Profesor</title>
     <link rel="stylesheet" href="../../styles.css">
 </head>
 <body>
     <header id="header"></header>
 
-    <h1>Lista de Profesores</h1>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Email</th>
-                <th>Materia</th>
-            </tr>
-        </thead>
-        <tbody id="teacher-list"></tbody>
-    </table>
+    <h1>Eliminar Profesor</h1>
+    <form id="delete-teacher-form">
+        <input type="number" id="id" placeholder="ID del Profesor" required>
+        <button type="submit">Eliminar</button>
+    </form>
 
     <footer id="footer"></footer>
     <script src="../../config.js"></script>
