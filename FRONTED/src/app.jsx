@@ -1,30 +1,18 @@
-import React, { useState, useEffect } from "react";
-import Login from "./components/login";
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Dashboard from "./components/dashboard";
+import UserManagement from "./components/services/UserManagement";
+import UserForm from "./components/services/UserForm";
 
 const App = () => {
-  const [token, setToken] = useState(localStorage.getItem("token") || null);
-
-  // Función para manejar el login y guardar el token
-  const handleLogin = (token) => {
-    setToken(token);
-    localStorage.setItem("token", token); // Guarda el token en localStorage
-  };
-
-  // Función para cerrar sesión
-  const handleLogout = () => {
-    setToken(null);
-    localStorage.removeItem("token"); // Elimina el token al cerrar sesión
-  };
-
   return (
-    <div>
-      {token ? (
-        <Dashboard onLogout={handleLogout} />
-      ) : (
-        <Login onLogin={handleLogin} />
-      )}
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/users" element={<UserManagement />} />
+        <Route path="/add-user" element={<UserForm />} />
+      </Routes>
+    </Router>
   );
 };
 

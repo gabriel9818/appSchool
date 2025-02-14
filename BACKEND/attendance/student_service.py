@@ -1,6 +1,6 @@
 import requests
 
-GRAPHQL_URL = "http://localhost:4000/graphql"
+GRAPHQL_URL = "http://18.210.147.186:4000/graphql"
 
 def get_student_by_id(student_id):
     query = """

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Microservicios</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header id="header"></header>
+
+    <main>
+        <h1>Bienvenido al Panel de Gestión</h1>
+        <div class="menu">
+            <a href="services/teachers/list.html">📋 Gestión de Profesores</a>
+            <!-- En el futuro aquí se agregarán otros microservicios -->
+        </div>
+    </main>
+
+    <footer id="footer"></footer>
+
+    <script>
+        // Cargar el header y footer de forma dinámica
+        fetch("components/header.html").then(res => res.text()).then(data => document.getElementById("header").innerHTML = data);
+        fetch("components/footer.html").then(res => res.text()).then(data => document.getElementById("footer").innerHTML = data);
+    </script>
+</body>
+</html>

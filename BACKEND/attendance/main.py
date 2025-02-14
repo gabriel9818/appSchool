@@ -3,7 +3,7 @@ import requests
 from database import get_db_connection
 
 # URL del microservicio `student_registration`
-GRAPHQL_URL = "http://localhost:4000/graphql"
+GRAPHQL_URL = "http://18.210.147.186:4000/graphql"
 
 app = FastAPI()
 
@@ -88,4 +88,4 @@ def home():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(app, host="0.0.0.0", port=7000, reload=True)

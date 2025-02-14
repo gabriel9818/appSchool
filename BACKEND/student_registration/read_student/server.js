@@ -36,8 +36,8 @@ app.get("/", () => "Welcome to the Read Students Microservice!");
 // Start the Elysia server
 app.listen(process.env.APP_PORT || 8087);
 
-console.log(`✅ Server running on http://localhost:${process.env.APP_PORT || 8087}`);
-console.log(`📄 Swagger docs available at http://localhost:${process.env.APP_PORT || 8087}/swagger`);
+console.log(`Server running on http://18.210.147.186:${process.env.APP_PORT || 8087}`);
+console.log(`Swagger docs available at http://18.210.147.186:${process.env.APP_PORT || 8087}/swagger`);
 
 // ✅ Corrección de GraphQL Yoga
 const schema = makeExecutableSchema({ typeDefs, resolvers }); // Se usa makeExecutableSchema para evitar errores
@@ -47,5 +47,5 @@ const yoga = createYoga({ schema });
 const server = createServer(yoga);
 
 server.listen(4000, () => {
-  console.log("✅ GraphQL server running at http://localhost:4000/graphql");
+  console.log("✅ GraphQL server running at http://18.210.147.186:4000/graphql");
 });

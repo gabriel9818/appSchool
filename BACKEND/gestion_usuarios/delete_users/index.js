@@ -3,12 +3,19 @@ const bodyParser = require('body-parser');
 const { sequelize } = require('./models');
 const userRoutes = require('./routes/userRoutes');
 const dotenv = require('dotenv');
+const cors = require('cors'); 
 
 // Cargar variables de entorno
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3002; // Asegurar que el puerto no entre en conflicto
+
+app.use(cors({
+  origin: "http://localhost:4000", // Permite peticiones desde tu frontend
+  methods: "GET,POST,PUT,DELETE",
+  allowedHeaders: "Content-Type,Authorization"
+}));
 
 // Middleware
 app.use(bodyParser.json());

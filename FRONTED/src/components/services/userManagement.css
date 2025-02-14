@@ -1,0 +1,57 @@
+.user-management-container {
+    max-width: 900px;
+    margin: auto;
+    text-align: center;
+  }
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .btn {
+    padding: 8px 15px;
+    margin: 5px;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .back-btn {
+    background: #007bff;
+    color: white;
+  }
+  
+  .add-btn {
+    background: #28a745;
+    color: white;
+  }
+  
+  .search-bar {
+    width: 100%;
+    padding: 8px;
+    margin: 10px 0;
+  }
+  
+  .user-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .user-table th, .user-table td {
+    border: 1px solid black;
+    padding: 8px;
+  }
+  
+  .actions button {
+    margin: 0 5px;
+  }
+  
+  .edit-btn {
+    color: blue;
+  }
+  
+  .delete-btn {
+    color: red;
+  }
+  

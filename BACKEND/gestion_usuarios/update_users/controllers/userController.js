@@ -1,30 +1,47 @@
-const User = require('../models/User');
-const bcrypt = require('bcryptjs');
+const { User } = require('../models');
 
-// Actualizar un usuario por ID
+// 🔹 Obtener usuario por ID
+const getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 🔹 Verifica si el modelo User está definido
+    if (!User) {
+      console.error("❌ Error: El modelo User no está definido.");
+      return res.status(500).json({ error: "El modelo User no está disponible" });
+    }
+
+    const user = await User.findByPk(id);
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error al obtener usuario:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+};
+
+// 🔹 Actualizar usuario por ID
 const updateUserById = async (req, res) => {
   try {
     const { id } = req.params;
     const { nombre, email, password, rol } = req.body;
 
-    // Buscar usuario por ID
     const user = await User.findByPk(id);
     if (!user) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
+      return res.status(404).json({ error: "Usuario no encontrado" });
     }
 
-    let hashedPassword = user.password;
-    if (password) {
-      hashedPassword = await bcrypt.hash(password, 10);
-    }
+    await user.update({ nombre, email, password, rol });
 
-    // Actualizar usuario
-    await user.update({ nombre, email, password: hashedPassword, rol });
-
-    res.status(200).json({ message: 'Usuario actualizado exitosamente', user });
+    res.status(200).json({ message: "Usuario actualizado correctamente" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error al actualizar usuario:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
-module.exports = { updateUserById };
+module.exports = { getUserById, updateUserById };

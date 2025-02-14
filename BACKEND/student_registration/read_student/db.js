@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 // Load environment variables
 dotenv.config();
 
-// Create database connection
+// Create database 
 const db = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
