@@ -1,9 +1,12 @@
 const express = require('express');
-const { updateUserById } = require('../controllers/userController');
+const { updateUserById, getUserById } = require('../controllers/userController');
 
 const router = express.Router();
 
-// Ruta para actualizar usuario por ID
+// 🔹 Ruta para obtener usuario por ID
+router.get('/:id', getUserById);
+
+// 🔹 Ruta para actualizar usuario por ID
 router.put('/:id', updateUserById);
 
 module.exports = router;

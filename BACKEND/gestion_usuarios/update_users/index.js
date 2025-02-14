@@ -12,7 +12,7 @@ const app = express();
 const PORT = process.env.PORT || 3004;
 
 app.use(cors({
-  origin: "http://localhost:4000", // Permite peticiones desde tu frontend
+  origin: "http://localhost:4000",
   methods: "GET,POST,PUT,DELETE",
   allowedHeaders: "Content-Type,Authorization"
 }));
@@ -20,8 +20,8 @@ app.use(cors({
 // Middleware
 app.use(bodyParser.json());
 
-// Rutas
-app.use('/api/update', userRoutes);
+// 🔹 Rutas
+app.use('/api/users', userRoutes); // Ahora todas las rutas estarán en /api/users
 
 // Conectar a la base de datos y arrancar el servidor
 sequelize.authenticate()
