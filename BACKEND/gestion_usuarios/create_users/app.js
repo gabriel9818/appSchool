@@ -9,6 +9,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(cors({
+  origin: "http://localhost:4000", // Permite peticiones desde tu frontend
+  methods: "GET,POST,PUT,DELETE",
+  allowedHeaders: "Content-Type,Authorization"
+}));
+
 // Middleware para parsear solicitudes JSON
 app.use(bodyParser.json());
 
